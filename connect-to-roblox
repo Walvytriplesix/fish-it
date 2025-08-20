@@ -13,5 +13,5 @@ if scriptUrl then
         warn("[Walvy Community] Failed to load script:", errorMsg)
     end
 else
-    print("[Walvy Community] Succesfuly Loaded Script Fish It.")
+    print("[Walvy Community] Failed to load script Fish It.")
 end
