@@ -327,12 +327,6 @@ local autoSellButton = TpTab:Button({
     end
 })
 
-local SearchTab = Window:Tab({  
-    Title = "Teleport To Player",  
-    Icon = "user-search"  -- icon paling pas untuk pencarian user
-})
-
-
 local SpawnboatTab = Window:Tab({  
     Title = "Spawn Boat",  
     Icon = "ship"  -- bisa diganti ke "lock" atau "person"
