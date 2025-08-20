@@ -1,16 +1,16 @@
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
--- Create GUI Window (mobile-friendly size, no tab dropdown)
+-- Create GUI Window (mobile-friendly size, no tab dropdown, slightly transparent)
 local Window = WindUI:CreateWindow({
     Title = "Walvy Community - Fish it",
     Icon = "rbxassetid://85151307796718",
     IconThemed = true,
-    Author = "VERSION: VIP",
+    Author = "VERSION: Vip",
     Folder = "Walvy-Community-Fish-It",
     Size = UDim2.fromOffset(350, 450),
     Theme = "Dark",
     SideBarWidth = 150,
-    Transparent = false,
+    Transparent = true, -- Enable transparency by default
     Center = true,
     Draggable = true,
     UseTabSelector = false
@@ -46,14 +46,15 @@ InfoTab:Button({
     end
 })
 
+-- Auto Farm Tab
 local AutofarmTab = Window:Tab({ 
     Title = "Auto Farm", 
-    Icon = "fish" -- ganti sesuai pilihan
+    Icon = "fish"
 })
 
 -- ===== Auto Fish Toggle =====
 local autoFishEnabled = false
-local delayTime = 3 -- jeda antar fishing attempt, bisa diubah
+local delayTime = 3 -- Delay between fishing attempts
 
 local autoFishToggle = AutofarmTab:Toggle({
     Title = "Auto Fish",
@@ -73,12 +74,11 @@ local autoFishToggle = AutofarmTab:Toggle({
                 while autoFishEnabled do
                     local success, err = pcall(function()
                         local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
                         local EquipRod = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/EquipToolFromHotbar"]
                         local StartMinigame = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/RequestFishingMinigameStarted"]
                         local ChargeRod = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/ChargeFishingRod"]
 
-                        -- Auto equip rod (slot 1 misal)
+                        -- Auto equip rod (slot 1)
                         EquipRod:FireServer(1)
                         task.wait(0.1)
 
@@ -90,7 +90,7 @@ local autoFishToggle = AutofarmTab:Toggle({
                         ChargeRod:InvokeServer(workspace:GetServerTimeNow())
                         task.wait(0.1)
 
-                        -- Request mini game lagi untuk memastikan
+                        -- Request mini game again to ensure
                         StartMinigame:InvokeServer(-0.7499996423721313, 1)
                     end)
 
@@ -112,38 +112,38 @@ local autoFishToggle = AutofarmTab:Toggle({
 })
 
 -- ===== Auto Instant Fish Toggle =====
-local autoFishEnabled = false
+local autoInstantFishEnabled = false
 
-local autoFishToggle = AutofarmTab:Toggle({
+local autoInstantFishToggle = AutofarmTab:Toggle({
     Title = "Auto Instant Fish",
     Desc = "Automatically completes fishing instantly",
     Value = false,
     Callback = function(state)
-        autoFishEnabled = state
+        autoInstantFishEnabled = state
 
         if state then
             WindUI:Notify({
-                Title = "Auto Fish",
+                Title = "Auto Instant Fish",
                 Content = "Enabled",
                 Duration = 3
             })
 
             task.spawn(function()
-                while autoFishEnabled do
+                while autoInstantFishEnabled do
                     local success, err = pcall(function()
                         local ReplicatedStorage = game:GetService("ReplicatedStorage")
                         local REFishingCompleted = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/FishingCompleted"]
                         REFishingCompleted:FireServer()
                     end)
                     if not success then
-                        warn("Auto Fish error:", err)
+                        warn("Auto Instant Fish error:", err)
                     end
-                    task.wait(0.1) -- jeda 1 detik antar fish, bisa diubah
+                    task.wait(0.1)
                 end
             end)
         else
             WindUI:Notify({
-                Title = "Auto Fish",
+                Title = "Auto Instant Fish",
                 Content = "Disabled",
                 Duration = 3
             })
@@ -152,7 +152,7 @@ local autoFishToggle = AutofarmTab:Toggle({
 })
 
 -- ===== Auto Sell Button =====
-local autoSellButton = AutofarmTab:Button({
+local sellAllButton = AutofarmTab:Button({
     Title = "Sell All Fish",
     Desc = "Click to sell all your items instantly",
     Callback = function()
@@ -171,363 +171,549 @@ local autoSellButton = AutofarmTab:Button({
     end
 })
 
+local changestatsTab = Window:Tab({  
+    Title = "Edit Stats",  
+    Icon = "file-text" -- ganti dengan icon sesuai keinginan
+})
+
+-- Visual Stats
+changestatsTab:Paragraph({
+    Title = "Edit Visual Stats",
+    Desc = "Modify your rod stats below."
+})
+
+-- Fishing Luck
+local fishingLuckInput = changestatsTab:Input({
+    Title = "Fishing Luck",
+    Placeholder = "Enter a number (e.g., 100)",
+    Callback = function(value)
+        _G.FishingLuck = tonumber(value) or 0
+    end
+})
+
+changestatsTab:Button({
+    Title = "Set Fishing Luck",
+    Callback = function()
+        if _G.FishingLuck then
+            local success, err = pcall(function()
+                local ReplicatedStorage = game:GetService("ReplicatedStorage")
+                local SetFishingLuck = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/SetFishingLuck"]
+                SetFishingLuck:FireServer(_G.FishingLuck)
+            end)
+            if success then
+                WindUI:Notify({Title="Fishing Luck", Content="Fishing Luck applied!", Duration=3})
+            else
+                warn("Failed to set Fishing Luck:", err)
+            end
+        end
+    end
+})
+
+-- Shiny Chance
+local shinyChanceInput = changestatsTab:Input({
+    Title = "Shiny Chance",
+    Placeholder = "Enter a number (e.g., 100)",
+    Callback = function(value)
+        _G.ShinyChance = tonumber(value) or 0
+    end
+})
+
+changestatsTab:Button({
+    Title = "Set Shiny Chance",
+    Callback = function()
+        if _G.ShinyChance then
+            local success, err = pcall(function()
+                local ReplicatedStorage = game:GetService("ReplicatedStorage")
+                local SetShinyChance = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/SetShinyChance"]
+                SetShinyChance:FireServer(_G.ShinyChance)
+            end)
+            if success then
+                WindUI:Notify({Title="Shiny Chance", Content="Shiny Chance applied!", Duration=3})
+            else
+                warn("Failed to set Shiny Chance:", err)
+            end
+        end
+    end
+})
+
+-- Mutation Chance
+local mutationChanceInput = changestatsTab:Input({
+    Title = "Mutation Chance",
+    Placeholder = "Enter a number (e.g., 100)",
+    Callback = function(value)
+        _G.MutationChance = tonumber(value) or 0
+    end
+})
+
+changestatsTab:Button({
+    Title = "Set Mutation Chance",
+    Callback = function()
+        if _G.MutationChance then
+            local success, err = pcall(function()
+                local ReplicatedStorage = game:GetService("ReplicatedStorage")
+                local SetMutationChance = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/SetMutationChance"]
+                SetMutationChance:FireServer(_G.MutationChance)
+            end)
+            if success then
+                WindUI:Notify({Title="Mutation Chance", Content="Mutation Chance applied!", Duration=3})
+            else
+                warn("Failed to set Mutation Chance:", err)
+            end
+        end
+    end
+})
+
+-- Rod Modifier
+changestatsTab:Paragraph({
+    Title = "Rod Modifier",
+    Desc = "Apply max stats to your currently equipped skinned rod."
+})
+
+changestatsTab:Button({
+    Title = "Apply Max Stats to Skinned Rod",
+    Callback = function()
+        local success, err = pcall(function()
+            local ReplicatedStorage = game:GetService("ReplicatedStorage")
+            local ApplyMaxRodStats = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/ApplyMaxRodStats"]
+            ApplyMaxRodStats:FireServer()
+        end)
+        if success then
+            WindUI:Notify({Title="Rod Modifier", Content="Max stats applied!", Duration=3})
+        else
+            warn("Failed to apply max stats:", err)
+        end
+    end
+})
+
+-- Teleport Tab
 local TpTab = Window:Tab({  
-    Title = "Teleport Tab",  
-    Icon = "map-pin"  -- bisa diganti ke "lock" atau "person"
+    Title = "Teleport To Island",  
+    Icon = "map-pin"
 })
 
-local autoSellButton = TpTab:Button({
-    Title = "Kohana Lava",
+-- Daftar lokasi teleport
+local teleportLocations = {
+    {Title = "Kohana Lava", Position = Vector3.new(-593.32, 59.0, 130.82)},
+    {Title = "Esotoric Island", Position = Vector3.new(2024.490, 27.397, 1391.620)},
+    {Title = "Kohana", Position = Vector3.new(-630.300, 16.035, 597.480)},
+    {Title = "Lost Isle", Position = Vector3.new(-3660.070, 5.426, -1053.020)},
+    {Title = "Stingray Shores", Position = Vector3.new(45.280, 28.000, 2987.110)},
+    {Title = "Tropical Grove", Position = Vector3.new(-2092.897, 6.268, 3693.929)},
+    {Title = "Weather Machine", Position = Vector3.new(-1495.250, 6.500, 1889.920)},
+    {Title = "Coral Reefs", Position = Vector3.new(-2949.359, 63.250, 2213.966)},
+    {Title = "Crater Island", Position = Vector3.new(1012.045, 22.676, 5080.221)},
+    {Title = "Teleport To Enchant", Position = Vector3.new(3236.120, -1302.855, 1399.491)}
+}
+
+-- Buat list nama untuk dropdown
+local locationNames = {}
+for _, loc in ipairs(teleportLocations) do
+    table.insert(locationNames, loc.Title)
+end
+
+-- Default selected location
+local selectedLocation = locationNames[1]
+
+-- Paragraph
+TpTab:Paragraph({
+    Title = "Teleport",
+    Desc = "Select a location from dropdown and press Teleport."
+})
+
+-- Dropdown Teleport
+local teleportDropdown = TpTab:Dropdown({
+    Title = "Select Location",
+    Values = locationNames,
+    Value = selectedLocation,
+    Callback = function(value)
+        selectedLocation = value
+        WindUI:Notify({Title="Location Selected", Content=value, Duration=3})
+    end
+})
+
+-- Tombol Teleport
+TpTab:Button({
+    Title = "Teleport",
     Icon = "rbxassetid://85151307796718",
+    Callback = function()
+        if selectedLocation then
+            local loc
+            for _, l in ipairs(teleportLocations) do
+                if l.Title == selectedLocation then
+                    loc = l
+                    break
+                end
+            end
+
+            if loc then
+                local player = game.Players.LocalPlayer
+                local character = player.Character or player.CharacterAdded:Wait()
+                local hrp = character:WaitForChild("HumanoidRootPart")
+                hrp.CFrame = CFrame.new(loc.Position)
+                WindUI:Notify({Title="Teleported", Content="Teleported to "..loc.Title, Duration=3})
+            end
+        end
+    end
+})
+
+-- Teleport to Player Tab
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local ScannerTab = Window:Tab({
+    Title = "Teleport To Player",
+    Icon = "user-search"
+})
+
+local selectedPlayer = nil
+local playerDropdown = nil -- reference dropdown
+
+-- Fungsi refresh dropdown
+local function refreshPlayerDropdown()
+    -- Hapus dropdown lama jika ada
+    if playerDropdown then
+        playerDropdown:Remove()
+    end
+
+    -- Buat daftar player baru
+    local playerNames = {}
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            table.insert(playerNames, plr.Name)
+        end
+    end
+
+    -- Default selected player
+    if #playerNames > 0 then
+        if not table.find(playerNames, selectedPlayer) then
+            selectedPlayer = playerNames[1]
+        end
+    else
+        selectedPlayer = nil
+    end
+
+    -- Buat dropdown baru
+    playerDropdown = ScannerTab:Dropdown({
+        Title = "Select Player",
+        Values = playerNames,
+        Value = selectedPlayer,
+        Callback = function(value)
+            selectedPlayer = value
+            WindUI:Notify({Title="Player Selected", Content=value, Duration=3})
+        end
+    })
+end
+
+-- Buat dropdown pertama kali sebelum tombol
+refreshPlayerDropdown()
+
+-- Tombol Teleport di bawah dropdown
+ScannerTab:Button({
+    Title = "Teleport",
+    Callback = function()
+        if selectedPlayer then
+            local targetPlayer = Players:FindFirstChild(selectedPlayer)
+            local myChar = LocalPlayer.Character
+            local hrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+            local targetChar = targetPlayer and targetPlayer.Character
+            local targetHRP = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+
+            if hrp and targetHRP then
+                hrp.CFrame = targetHRP.CFrame + Vector3.new(0,5,0)
+                WindUI:Notify({Title="Teleported", Content="Teleported to "..selectedPlayer, Duration=3})
+            end
+        end
+    end
+})
+
+-- Loop refresh dropdown tiap detik (tombol tetap di bawah)
+spawn(function()
+    while true do
+        wait(1)
+        refreshPlayerDropdown()
+    end
+end)
+
+-- Variable untuk simpan posisi
+local savedPosition = nil
+
+-- Tombol Save Position
+ScannerTab:Button({
+    Title = "Save Position",
     Callback = function()
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
         local hrp = character:WaitForChild("HumanoidRootPart")
-
-        -- Target koordinat Kohana Lava
-        local targetPosition = Vector3.new(-593.32, 59.0, 130.82)
-
-        -- Teleport
-        hrp.CFrame = CFrame.new(targetPosition)
+        savedPosition = hrp.Position
+        WindUI:Notify({Title="Position Saved", Content=tostring(savedPosition), Duration=3})
     end
 })
 
-local autoSellButton = TpTab:Button({
-    Title = "Esotoric Island",
-    Icon = "rbxassetid://85151307796718",
+-- Tombol Load Saved Position
+ScannerTab:Button({
+    Title = "Load Saved Position",
     Callback = function()
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local hrp = character:WaitForChild("HumanoidRootPart")
-
-        local targetPosition = Vector3.new(2024.490, 27.397, 1391.620)
-
-        -- Teleport
-        hrp.CFrame = CFrame.new(targetPosition)
+        if savedPosition then
+            local player = game.Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            local hrp = character:WaitForChild("HumanoidRootPart")
+            hrp.CFrame = CFrame.new(savedPosition)
+            WindUI:Notify({Title="Loaded Saved Position", Content=tostring(savedPosition), Duration=3})
+        else
+            WindUI:Notify({Title="Error", Content="No saved position found!", Duration=3})
+        end
     end
 })
 
-local autoSellButton = TpTab:Button({
-    Title = "Kohana",
-    Icon = "rbxassetid://85151307796718",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local hrp = character:WaitForChild("HumanoidRootPart")
-
-        local targetPosition = Vector3.new(-630.300, 16.035, 597.480)
-
-        -- Teleport
-        hrp.CFrame = CFrame.new(targetPosition)
-    end
-})
-
-local autoSellButton = TpTab:Button({
-    Title = "Lost Isle",
-    Icon = "rbxassetid://85151307796718",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local hrp = character:WaitForChild("HumanoidRootPart")
-
-        local targetPosition = Vector3.new(-3660.070, 5.426, -1053.020)
-
-        -- Teleport
-        hrp.CFrame = CFrame.new(targetPosition)
-    end
-})
-
-local autoSellButton = TpTab:Button({
-    Title = "Stingray Shores",
-    Icon = "rbxassetid://85151307796718",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local hrp = character:WaitForChild("HumanoidRootPart")
-
-        local targetPosition = Vector3.new(45.280, 28.000, 2987.110)
-
-        -- Teleport
-        hrp.CFrame = CFrame.new(targetPosition)
-    end
-})
-
-local autoSellButton = TpTab:Button({
-    Title = "Tropical Grove",
-    Icon = "rbxassetid://85151307796718",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local hrp = character:WaitForChild("HumanoidRootPart")
-
-        local targetPosition = Vector3.new(-2092.897, 6.268, 3693.929)
-
-        -- Teleport
-        hrp.CFrame = CFrame.new(targetPosition)
-    end
-})
-
-local autoSellButton = TpTab:Button({
-    Title = "Tropical Grove",
-    Icon = "rbxassetid://85151307796718",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local hrp = character:WaitForChild("HumanoidRootPart")
-
-        local targetPosition = Vector3.new(-2092.897, 6.268, 3693.929)
-
-        -- Teleport
-        hrp.CFrame = CFrame.new(targetPosition)
-    end
-})
-
-local autoSellButton = TpTab:Button({
-    Title = "Weather Machine",
-    Icon = "rbxassetid://85151307796718",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local hrp = character:WaitForChild("HumanoidRootPart")
-
-        local targetPosition = Vector3.new(-1495.250, 6.500, 1889.920)
-
-        -- Teleport
-        hrp.CFrame = CFrame.new(targetPosition)
-    end
-})
-
-local autoSellButton = TpTab:Button({
-    Title = "Coral Reefs",
-    Icon = "rbxassetid://85151307796718",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local hrp = character:WaitForChild("HumanoidRootPart")
-
-        local targetPosition = Vector3.new(-2949.359, 63.250, 2213.966)
-
-        -- Teleport
-        hrp.CFrame = CFrame.new(targetPosition)
-    end
-})
-
-local autoSellButton = TpTab:Button({
-    Title = "Crater Island",
-    Icon = "rbxassetid://85151307796718",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local hrp = character:WaitForChild("HumanoidRootPart")
-
-        local targetPosition = Vector3.new(1012.045, 22.676, 5080.221)
-
-        -- Teleport
-        hrp.CFrame = CFrame.new(targetPosition)
-    end
-})
-
-local SpawnboatTab = Window:Tab({  
+-- Spawn Boat Tab
+local SpawnBoatTab = Window:Tab({  
     Title = "Spawn Boat",  
-    Icon = "ship"  -- bisa diganti ke "lock" atau "person"
+    Icon = "ship"
 })
 
--- Tombol Spawn Small Boat
-SpawnboatTab:Button({
-    Title = "Spawn Small Boat",
+-- Boat Types
+local boatTypes = {
+    {Title = "Small Boat", Id = 1},
+    {Title = "Kayak", Id = 2},
+    {Title = "Jetski", Id = 3},
+    {Title = "Highfield", Id = 4},
+    {Title = "Speed Boat", Id = 5},
+    {Title = "Fishing Boat", Id = 6},
+    {Title = "Mini Yacht", Id = 14},
+    {Title = "Hyper Boat", Id = 7},
+    {Title = "Frozen Boat", Id = 11},
+    {Title = "Cruiser Boat", Id = 13}
+}
+
+-- Buat list nama untuk dropdown
+local boatNames = {}
+for _, boat in ipairs(boatTypes) do
+    table.insert(boatNames, boat.Title)
+end
+
+-- Default selected boat
+local selectedBoat = boatNames[1]
+
+-- Paragraph
+SpawnBoatTab:Paragraph({
+    Title = "Spawn Boats",
+    Desc = "Select a boat from dropdown and press Spawn."
+})
+
+-- Dropdown Boat
+SpawnBoatTab:Dropdown({
+    Title = "Select Boat",
+    Values = boatNames,
+    Value = selectedBoat,
+    Callback = function(value)
+        selectedBoat = value
+        WindUI:Notify({Title="Boat Selected", Content=value, Duration=3})
+    end
+})
+
+-- Tombol Spawn
+SpawnBoatTab:Button({
+    Title = "Spawn Boat",
     Icon = "ship",
     Callback = function()
         local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-        -- Spawn boat
         local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
         if RFSpawnBoat then
-            pcall(function()
-                RFSpawnBoat:InvokeServer(1) -- parameter sesuai Sigma Spy
-            end)
+            -- Cari ID boat yang sesuai nama
+            local boatId
+            for _, boat in ipairs(boatTypes) do
+                if boat.Title == selectedBoat then
+                    boatId = boat.Id
+                    break
+                end
+            end
+
+            if boatId then
+                local success, err = pcall(function()
+                    RFSpawnBoat:InvokeServer(boatId)
+                end)
+                if success then
+                    WindUI:Notify({Title="Boat Spawned", Content=selectedBoat, Duration=3})
+                else
+                    WindUI:Notify({Title="Spawn Error", Content=tostring(err), Duration=5})
+                end
+            else
+                WindUI:Notify({Title="Spawn Error", Content="Boat ID not found!", Duration=5})
+            end
         end
     end
 })
 
-SpawnboatTab:Button({
-    Title = "Spawn Kayak",
-    Icon = "ship",
-    Callback = function()
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- Buy Rod Tab
+local BuyRodTab = Window:Tab({  
+    Title = "Buy Rod & Weather & Bait",  
+    Icon = "shopping-cart"
+})
 
-        -- Spawn boat
-        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
-        if RFSpawnBoat then
-            pcall(function()
-                RFSpawnBoat:InvokeServer(2) -- parameter sesuai Sigma Spy
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RFPurchaseFishingRod = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/PurchaseFishingRod"]
+local RFPurchaseBait = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/PurchaseBait"]
+local RFPurchaseWeatherEvent = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/PurchaseWeatherEvent"]
+
+-- ===== Rod =====
+local rods = {
+    ["Luck Rod"] = 79, ["Carbon Rod"] = 76, ["Grass Rod"] = 85,
+    ["Demascus Rod"] = 77, ["Ice Rod"] = 78, ["Lucky Rod"] = 4,
+    ["Midnight Rod"] = 80, ["Steampunk Rod"] = 6, ["Chrome Rod"] = 7,
+    ["Astral Rod"] = 5, ["Ares Rod"] = 126, ["Angler Rod"] = 168
+}
+local rodNames = {}
+for name,_ in pairs(rods) do table.insert(rodNames, name) end
+local selectedRod = rodNames[1]
+
+BuyRodTab:Paragraph({Title="Buy Rod", Desc="Select a rod to purchase."})
+
+BuyRodTab:Dropdown({
+    Title = "Select Rod",
+    Values = rodNames,
+    Value = selectedRod,
+    Callback = function(value)
+        selectedRod = value
+        WindUI:Notify({Title="Rod Selected", Content=value, Duration=3})
+    end
+})
+
+BuyRodTab:Button({
+    Title="Buy Rod",
+    Callback=function()
+        if selectedRod and rods[selectedRod] then
+            local success, err = pcall(function()
+                RFPurchaseFishingRod:InvokeServer(rods[selectedRod])
             end)
+            if success then
+                WindUI:Notify({Title="Rod Purchase", Content="Purchased "..selectedRod, Duration=3})
+            else
+                WindUI:Notify({Title="Rod Purchase Error", Content=tostring(err), Duration=5})
+            end
         end
     end
 })
 
-SpawnboatTab:Button({
-    Title = "Spawn Jetski",
-    Icon = "ship",
-    Callback = function()
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local baitNames = {
+    "TopWater Bait",
+    "Lucky Bait",
+    "Midnight Bait",
+    "Chroma Bait",
+    "Dark Mater Bait",
+    "Corrupt Bait",
+    "Aether Bait"
+}
 
-        -- Spawn boat
-        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
-        if RFSpawnBoat then
-            pcall(function()
-                RFSpawnBoat:InvokeServer(3) -- parameter sesuai Sigma Spy
+-- Mapping bait ke jumlah / ID
+local baits = {
+    ["TopWater Bait"]=10,
+    ["Lucky Bait"]=2,
+    ["Midnight Bait"]=3,
+    ["Chroma Bait"]=6,
+    ["Dark Mater Bait"]=8,
+    ["Corrupt Bait"]=15,
+    ["Aether Bait"]=16
+}
+
+-- Default selected bait
+local selectedBait = baitNames[1]
+
+-- Paragraph Buy Bait
+BuyRodTab:Paragraph({
+    Title = "Buy Bait",
+    Desc = "Select a bait to purchase."
+})
+
+-- Dropdown Bait sesuai urutan
+BuyRodTab:Dropdown({
+    Title="Select Bait",
+    Values=baitNames,
+    Value=selectedBait,
+    Callback=function(value)
+        selectedBait = value
+        WindUI:Notify({Title="Bait Selected", Content=value, Duration=3})
+    end
+})
+
+-- Tombol Buy Bait
+BuyRodTab:Button({
+    Title="Buy Bait",
+    Callback=function()
+        if selectedBait and baits[selectedBait] then
+            local success, err = pcall(function()
+                RFPurchaseBait:InvokeServer(baits[selectedBait])
             end)
+            if success then
+                WindUI:Notify({Title="Bait Purchase", Content="Purchased "..selectedBait.." x"..baits[selectedBait], Duration=3})
+            else
+                WindUI:Notify({Title="Bait Purchase Error", Content=tostring(err), Duration=5})
+            end
         end
     end
 })
 
-SpawnboatTab:Button({
-    Title = "Spawn Highfield",
-    Icon = "ship",
-    Callback = function()
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- ===== Weather =====
+local weathers = {"Wind", "Snow", "Cloudy", "Storm", "Radiant", "Shark Hunt"}
+local selectedWeather = weathers[1]
 
-        -- Spawn boat
-        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
-        if RFSpawnBoat then
-            pcall(function()
-                RFSpawnBoat:InvokeServer(4) -- parameter sesuai Sigma Spy
+BuyRodTab:Paragraph({Title="Buy Weather", Desc="Select a weather to purchase."})
+
+BuyRodTab:Dropdown({
+    Title="Select Weather",
+    Values=weathers,
+    Value=selectedWeather,
+    Callback=function(value)
+        selectedWeather = value
+        WindUI:Notify({Title="Weather Selected", Content=value, Duration=3})
+    end
+})
+
+BuyRodTab:Button({
+    Title="Buy Weather",
+    Callback=function()
+        if selectedWeather then
+            local success, err = pcall(function()
+                RFPurchaseWeatherEvent:InvokeServer(selectedWeather)
             end)
+            if success then
+                WindUI:Notify({Title="Weather Purchase", Content="Purchased "..selectedWeather, Duration=3})
+            else
+                WindUI:Notify({Title="Weather Purchase Error", Content=tostring(err), Duration=5})
+            end
         end
     end
 })
 
-SpawnboatTab:Button({
-    Title = "Spawn Speed Boat",
-    Icon = "ship",
-    Callback = function()
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-        -- Spawn boat
-        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
-        if RFSpawnBoat then
-            pcall(function()
-                RFSpawnBoat:InvokeServer(5) -- parameter sesuai Sigma Spy
-            end)
-        end
-    end
+-- Anti Kick Tab
+local AntiKickTab = Window:Tab({  
+    Title = "Anti Kick",  
+    Icon = "shield"
 })
 
-SpawnboatTab:Button({
-    Title = "Spawn Fishing Boat",
-    Icon = "ship",
-    Callback = function()
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-        -- Spawn boat
-        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
-        if RFSpawnBoat then
-            pcall(function()
-                RFSpawnBoat:InvokeServer(6) -- parameter sesuai Sigma Spy
-            end)
-        end
-    end
-})
-
-SpawnboatTab:Button({
-    Title = "Spawn Mini Yacht",
-    Icon = "ship",
-    Callback = function()
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-        -- Spawn boat
-        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
-        if RFSpawnBoat then
-            pcall(function()
-                RFSpawnBoat:InvokeServer(14) -- parameter sesuai Sigma Spy
-            end)
-        end
-    end
-})
-
-SpawnboatTab:Paragraph({
-    Title = "Gamepass Boat",
-})
-
-SpawnboatTab:Button({
-    Title = "Spawn Hyper Boat",
-    Icon = "ship",
-    Callback = function()
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-        -- Spawn boat
-        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
-        if RFSpawnBoat then
-            pcall(function()
-                RFSpawnBoat:InvokeServer(7) -- parameter sesuai Sigma Spy
-            end)
-        end
-    end
-})
-
-SpawnboatTab:Button({
-    Title = "Spawn Frozen Boat",
-    Icon = "ship",
-    Callback = function()
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-        -- Spawn boat
-        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
-        if RFSpawnBoat then
-            pcall(function()
-                RFSpawnBoat:InvokeServer(11) -- parameter sesuai Sigma Spy
-            end)
-        end
-    end
-})
-
-SpawnboatTab:Button({
-    Title = "Spawn Cruiser Boat",
-    Icon = "ship",
-    Callback = function()
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-        -- Spawn boat
-        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
-        if RFSpawnBoat then
-            pcall(function()
-                RFSpawnBoat:InvokeServer(13) -- parameter sesuai Sigma Spy
-            end)
-        end
-    end
-})
-
-local AntikickTab = Window:Tab({  
-    Title = "Anti Kick Tab",  
-    Icon = "shield"  -- bisa diganti ke "lock" atau "person"
-})
-
-local antiKickToggle = AntikickTab:Toggle({
-    Title = "Anti-Kick / AFK + Auto Jump",
-    Desc = "Prevents kick and simulates jump every 10 seconds",
+local antiKickToggle = AntiKickTab:Toggle({
+    Title = "Anti Kick",
+    Desc = "Every 10 seconds, the player will jump to prevent AFK kick.",
     Value = false,
     Callback = function(state)
         local player = game.Players.LocalPlayer
 
         if state then
-            -- Anti-AFK VirtualUser
+            -- Anti-AFK
             _G.AntiKickConnection = player.Idled:Connect(function()
                 local vu = game:GetService("VirtualUser")
                 vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
                 vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
             end)
 
-            -- Auto Jump setiap 10 detik menggunakan CFrame
+            -- Auto Jump loop menggunakan Humanoid
             _G.AutoJumpEnabled = true
-            task.spawn(function()
+            spawn(function()
                 while _G.AutoJumpEnabled do
                     task.wait(10)
                     local char = player.Character or player.CharacterAdded:Wait()
-                    local rootPart = char:WaitForChild("HumanoidRootPart", 5)
-                    if rootPart then
-                        rootPart.CFrame = rootPart.CFrame + Vector3.new(0, 3, 0)
-                        task.wait(0.1)
-                        rootPart.CFrame = rootPart.CFrame - Vector3.new(0, 3, 0)
+                    local humanoid = char:FindFirstChild("Humanoid")
+                    if humanoid and humanoid.Health > 0 then
+                        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
                     end
                 end
             end)
@@ -538,7 +724,6 @@ local antiKickToggle = AntikickTab:Toggle({
                 Duration = 3
             })
         else
-            -- Matikan Anti-Kick & Auto Jump
             if _G.AntiKickConnection then
                 _G.AntiKickConnection:Disconnect()
                 _G.AntiKickConnection = nil
@@ -562,14 +747,12 @@ SettingsTab:Paragraph({
     Desc = "Customize your GUI appearance."
 })
 
--- Theme list
 local themes = {}
 for themeName, _ in pairs(WindUI:GetThemes()) do
     table.insert(themes, themeName)
 end
 table.sort(themes)
 
--- Theme dropdown
 local themeDropdown = SettingsTab:Dropdown({
     Title = "Select Theme",
     Values = themes,
@@ -582,17 +765,21 @@ local themeDropdown = SettingsTab:Dropdown({
             Icon = "palette",
             Duration = 2
         })
+        if Window.ConfigManager then
+            local config = Window.ConfigManager:CreateConfig("transparent_autoload")
+            config:Set("Theme", theme)
+            config:Save()
+        end
     end
 })
 
--- Transparent toggle
 local transparentToggle = SettingsTab:Toggle({
     Title = "Transparency",
-    Desc = "Makes the interface transparent.",
+    Desc = "Makes the interface slightly transparent.",
     Value = true,
     Callback = function(state)
         Window:ToggleTransparency(state)
-        WindUI.TransparencyValue = state and 0.3 or 1
+        WindUI.TransparencyValue = state and 0.1 or 1 -- Slightly transparent when ON
         WindUI:Notify({
             Title = "Transparency",
             Content = state and "Transparency ON" or "Transparency OFF",
@@ -606,23 +793,36 @@ local transparentToggle = SettingsTab:Toggle({
     end
 })
 
--- Auto-load transparansi
 task.spawn(function()
     if Window.ConfigManager then
         local config = Window.ConfigManager:CreateConfig("transparent_autoload")
         local data = config:Load()
-        local state = data and data.TransparentMode or true
-        transparentToggle:Set(state)
-        Window:ToggleTransparency(state)
-        WindUI.TransparencyValue = state and 0,8 or 1
+        local transparencyState = data and data.TransparentMode or true
+        local themeState = data and data.Theme or WindUI:GetCurrentTheme()
+
+        -- Apply transparency
+        transparentToggle:Set(transparencyState)
+        Window:ToggleTransparency(transparencyState)
+        WindUI.TransparencyValue = transparencyState and 0.1 or 1
+
+        -- Apply theme
+        if themeState and table.find(themes, themeState) then
+            themeDropdown:Select(themeState)
+            WindUI:SetTheme(themeState)
+            print("Auto-loaded theme: " .. themeState)
+        else
+            themeDropdown:Select(WindUI:GetCurrentTheme())
+            print("No valid saved theme, using default: " .. WindUI:GetCurrentTheme())
+        end
     else
         transparentToggle:Set(true)
         Window:ToggleTransparency(true)
-        WindUI.TransparencyValue = 0.8
+        WindUI.TransparencyValue = 0.1
+        themeDropdown:Select(WindUI:GetCurrentTheme())
+        print("No ConfigManager, using default theme and transparency")
     end
 end)
 
--- Configuration Section
 SettingsTab:Paragraph({
     Title = "Configuration",
     Desc = "Type your config name and select config below."
@@ -630,7 +830,6 @@ SettingsTab:Paragraph({
 
 local configName = ""
 
--- Input config name
 SettingsTab:Input({
     Title = "Config Name",
     Placeholder = "Enter config name",
@@ -639,7 +838,6 @@ SettingsTab:Input({
     end
 })
 
--- Save Config Button
 SettingsTab:Button({
     Title = "Save Config",
     Desc = "Save current theme and transparency",
@@ -658,7 +856,6 @@ SettingsTab:Button({
     end
 })
 
--- Load Config Button
 SettingsTab:Button({
     Title = "Load Config",
     Desc = "Load saved configuration",
@@ -667,14 +864,14 @@ SettingsTab:Button({
             local config = Window.ConfigManager:CreateConfig(configName)
             local data = config:Load()
             if data then
-                if data.Theme ~= nil then
+                if data.Theme and table.find(themes, data.Theme) then
                     themeDropdown:Select(data.Theme)
                     WindUI:SetTheme(data.Theme)
                 end
                 if data.Transparency ~= nil then
                     transparentToggle:Set(data.Transparency)
                     Window:ToggleTransparency(data.Transparency)
-                    WindUI.TransparencyValue = data.Transparency and 0.3 or 1
+                    WindUI.TransparencyValue = data.Transparency and 0.9 or 1
                 end
                 WindUI:Notify({
                     Title = "Config Loaded",
@@ -692,7 +889,6 @@ SettingsTab:Button({
     end
 })
 
--- List Config Files
 local filesDropdown
 local function listConfigFiles()
     local files = {}
@@ -717,7 +913,6 @@ filesDropdown = SettingsTab:Dropdown({
     end
 })
 
--- Refresh List Button
 SettingsTab:Button({
     Title = "Refresh List",
     Callback = function()
@@ -725,5 +920,5 @@ SettingsTab:Button({
     end
 })
 
--- Pilih tab pertama saat GUI dibuka
+-- Select first tab on GUI open
 Window:SelectTab(1)
