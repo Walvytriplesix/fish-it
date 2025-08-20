@@ -1,1 +1,403 @@
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
+-- Create GUI Window (mobile-friendly size, no tab dropdown)
+local Window = WindUI:CreateWindow({
+    Title = "Walvy Community - Fish it",
+    Icon = "rbxassetid://85151307796718",
+    IconThemed = true,
+    Author = "VERSION: Vip",
+    Folder = "Walvy-Community-Fish-It",
+    Size = UDim2.fromOffset(350, 450),
+    Theme = "Dark",
+    SideBarWidth = 150,
+    Transparent = false,
+    Center = true,
+    Draggable = true,
+    UseTabSelector = false
+})
+
+-- Info Tab
+local InfoTab = Window:Tab({ Title = "Info", Icon = "info" })
+
+InfoTab:Paragraph({
+    Title = "Welcome to Walvy Community",
+    Desc = "Version Game: Fish it.",
+    Image = "rbxassetid://85693098195372",
+    ImageSize = 30,
+    Thumbnail = "rbxassetid://85693098195372",
+    ThumbnailSize = 210
+})
+
+InfoTab:Paragraph({
+    Title = "Join our Discord!",
+    Desc = "Click the button below to copy the invite link to our community."
+})
+
+InfoTab:Button({
+    Title = "Join Our Discord",
+    Desc = "Click to copy our Discord invite link.",
+    Callback = function()
+        setclipboard("https://discord.gg/kWC8Nn7kne")
+        WindUI:Notify({
+            Title = "Discord",
+            Content = "Discord invite link copied to clipboard!",
+            Duration = 5
+        })
+    end
+})
+
+local AutofarmTab = Window:Tab({ 
+    Title = "Auto Farm", 
+    Icon = "rbxassetid://13239226364" -- ganti sesuai pilihan
+})
+
+-- ===== Auto Fish Toggle =====
+local autoFishEnabled = false
+local delayTime = 3 -- jeda antar fishing attempt, bisa diubah
+
+local autoFishToggle = AutofarmTab:Toggle({
+    Title = "Auto Fish",
+    Desc = "Automatically fish and instant fishing",
+    Value = false,
+    Callback = function(state)
+        autoFishEnabled = state
+
+        if state then
+            WindUI:Notify({
+                Title = "Auto Fish",
+                Content = "Enabled",
+                Duration = 3
+            })
+
+            task.spawn(function()
+                while autoFishEnabled do
+                    local success, err = pcall(function()
+                        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+                        local EquipRod = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/EquipToolFromHotbar"]
+                        local StartMinigame = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/RequestFishingMinigameStarted"]
+                        local ChargeRod = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/ChargeFishingRod"]
+
+                        -- Auto equip rod (slot 1 misal)
+                        EquipRod:FireServer(1)
+                        task.wait(0.1)
+
+                        -- Start mini game
+                        StartMinigame:InvokeServer(-0.7499996423721313, 1)
+                        task.wait(0.1)
+
+                        -- Charge rod
+                        ChargeRod:InvokeServer(workspace:GetServerTimeNow())
+                        task.wait(0.1)
+
+                        -- Request mini game lagi untuk memastikan
+                        StartMinigame:InvokeServer(-0.7499996423721313, 1)
+                    end)
+
+                    if not success then
+                        warn("Auto Fish error:", err)
+                    end
+
+                    task.wait(delayTime)
+                end
+            end)
+        else
+            WindUI:Notify({
+                Title = "Auto Fish",
+                Content = "Disabled",
+                Duration = 3
+            })
+        end
+    end
+})
+
+-- ===== Auto Instant Fish Toggle =====
+local autoFishEnabled = false
+
+local autoFishToggle = AutofarmTab:Toggle({
+    Title = "Auto Instant Fish",
+    Desc = "Automatically completes fishing instantly",
+    Value = false,
+    Callback = function(state)
+        autoFishEnabled = state
+
+        if state then
+            WindUI:Notify({
+                Title = "Auto Fish",
+                Content = "Enabled",
+                Duration = 3
+            })
+
+            task.spawn(function()
+                while autoFishEnabled do
+                    local success, err = pcall(function()
+                        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+                        local REFishingCompleted = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/FishingCompleted"]
+                        REFishingCompleted:FireServer()
+                    end)
+                    if not success then
+                        warn("Auto Fish error:", err)
+                    end
+                    task.wait(0.1) -- jeda 1 detik antar fish, bisa diubah
+                end
+            end)
+        else
+            WindUI:Notify({
+                Title = "Auto Fish",
+                Content = "Disabled",
+                Duration = 3
+            })
+        end
+    end
+})
+
+-- ===== Auto Sell Button =====
+local autoSellButton = AutofarmTab:Button({
+    Title = "Sell All Fish",
+    Desc = "Click to sell all your items instantly",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local RFSellAllItems = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SellAllItems"]
+
+        pcall(function()
+            RFSellAllItems:InvokeServer()
+        end)
+
+        WindUI:Notify({
+            Title = "Auto Sell",
+            Content = "All items sold!",
+            Duration = 3
+        })
+    end
+})
+
+local AntikickTab = Window:Tab({  
+    Title = "Anti Kick Tab",  
+    Icon = "shield"  -- bisa diganti ke "lock" atau "person"
+})
+
+local antiKickToggle = AntikickTab:Toggle({
+    Title = "Anti-Kick / AFK + Auto Jump",
+    Desc = "Prevents kick and simulates jump every 10 seconds",
+    Value = false,
+    Callback = function(state)
+        local player = game.Players.LocalPlayer
+
+        if state then
+            -- Anti-AFK VirtualUser
+            _G.AntiKickConnection = player.Idled:Connect(function()
+                local vu = game:GetService("VirtualUser")
+                vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            end)
+
+            -- Auto Jump setiap 10 detik menggunakan CFrame
+            _G.AutoJumpEnabled = true
+            task.spawn(function()
+                while _G.AutoJumpEnabled do
+                    task.wait(10)
+                    local char = player.Character or player.CharacterAdded:Wait()
+                    local rootPart = char:WaitForChild("HumanoidRootPart", 5)
+                    if rootPart then
+                        rootPart.CFrame = rootPart.CFrame + Vector3.new(0, 3, 0)
+                        task.wait(0.1)
+                        rootPart.CFrame = rootPart.CFrame - Vector3.new(0, 3, 0)
+                    end
+                end
+            end)
+
+            WindUI:Notify({
+                Title = "Anti-Kick + Auto Jump",
+                Content = "Enabled: Anti-Kick active and jumping every 10 seconds",
+                Duration = 3
+            })
+        else
+            -- Matikan Anti-Kick & Auto Jump
+            if _G.AntiKickConnection then
+                _G.AntiKickConnection:Disconnect()
+                _G.AntiKickConnection = nil
+            end
+            _G.AutoJumpEnabled = false
+
+            WindUI:Notify({
+                Title = "Anti-Kick + Auto Jump",
+                Content = "Disabled",
+                Duration = 3
+            })
+        end
+    end
+})
+
+-- Settings Tab
+local SettingsTab = Window:Tab({ Title = "Settings", Icon = "settings" })
+
+SettingsTab:Paragraph({
+    Title = "Interface",
+    Desc = "Customize your GUI appearance."
+})
+
+-- Theme list
+local themes = {}
+for themeName, _ in pairs(WindUI:GetThemes()) do
+    table.insert(themes, themeName)
+end
+table.sort(themes)
+
+-- Theme dropdown
+local themeDropdown = SettingsTab:Dropdown({
+    Title = "Select Theme",
+    Values = themes,
+    Value = WindUI:GetCurrentTheme(),
+    Callback = function(theme)
+        WindUI:SetTheme(theme)
+        WindUI:Notify({
+            Title = "Theme Applied",
+            Content = theme,
+            Icon = "palette",
+            Duration = 2
+        })
+    end
+})
+
+-- Transparent toggle
+local transparentToggle = SettingsTab:Toggle({
+    Title = "Transparency",
+    Desc = "Makes the interface transparent.",
+    Value = true,
+    Callback = function(state)
+        Window:ToggleTransparency(state)
+        WindUI.TransparencyValue = state and 0.3 or 1
+        WindUI:Notify({
+            Title = "Transparency",
+            Content = state and "Transparency ON" or "Transparency OFF",
+            Duration = 2
+        })
+        if Window.ConfigManager then
+            local config = Window.ConfigManager:CreateConfig("transparent_autoload")
+            config:Set("TransparentMode", state)
+            config:Save()
+        end
+    end
+})
+
+-- Auto-load transparansi
+task.spawn(function()
+    if Window.ConfigManager then
+        local config = Window.ConfigManager:CreateConfig("transparent_autoload")
+        local data = config:Load()
+        local state = data and data.TransparentMode or true
+        transparentToggle:Set(state)
+        Window:ToggleTransparency(state)
+        WindUI.TransparencyValue = state and 0.3 or 1
+    else
+        transparentToggle:Set(true)
+        Window:ToggleTransparency(true)
+        WindUI.TransparencyValue = 0.3
+    end
+end)
+
+-- Configuration Section
+SettingsTab:Paragraph({
+    Title = "Configuration",
+    Desc = "Type your config name and select config below."
+})
+
+local configName = ""
+
+-- Input config name
+SettingsTab:Input({
+    Title = "Config Name",
+    Placeholder = "Enter config name",
+    Callback = function(text)
+        configName = text
+    end
+})
+
+-- Save Config Button
+SettingsTab:Button({
+    Title = "Save Config",
+    Desc = "Save current theme and transparency",
+    Callback = function()
+        if configName ~= "" then
+            local config = Window.ConfigManager:CreateConfig(configName)
+            config:Register("Theme", themeDropdown)
+            config:Register("Transparency", transparentToggle)
+            config:Save()
+            WindUI:Notify({
+                Title = "Config Saved",
+                Content = configName,
+                Duration = 3
+            })
+        end
+    end
+})
+
+-- Load Config Button
+SettingsTab:Button({
+    Title = "Load Config",
+    Desc = "Load saved configuration",
+    Callback = function()
+        if configName ~= "" then
+            local config = Window.ConfigManager:CreateConfig(configName)
+            local data = config:Load()
+            if data then
+                if data.Theme ~= nil then
+                    themeDropdown:Select(data.Theme)
+                    WindUI:SetTheme(data.Theme)
+                end
+                if data.Transparency ~= nil then
+                    transparentToggle:Set(data.Transparency)
+                    Window:ToggleTransparency(data.Transparency)
+                    WindUI.TransparencyValue = data.Transparency and 0.3 or 1
+                end
+                WindUI:Notify({
+                    Title = "Config Loaded",
+                    Content = configName,
+                    Duration = 3
+                })
+            else
+                WindUI:Notify({
+                    Title = "Config Error",
+                    Content = "Config file not found",
+                    Duration = 3
+                })
+            end
+        end
+    end
+})
+
+-- List Config Files
+local filesDropdown
+local function listConfigFiles()
+    local files = {}
+    local path = "WindUI/" .. Window.Folder .. "/config"
+    if not isfolder(path) then
+        makefolder(path)
+    end
+    for _, file in ipairs(listfiles(path)) do
+        local name = file:match("([^/]+)%.json$")
+        if name then table.insert(files, name) end
+    end
+    return files
+end
+
+filesDropdown = SettingsTab:Dropdown({
+    Title = "Select Config",
+    Values = listConfigFiles(),
+    Multi = false,
+    AllowNone = true,
+    Callback = function(selection)
+        configName = selection
+    end
+})
+
+-- Refresh List Button
+SettingsTab:Button({
+    Title = "Refresh List",
+    Callback = function()
+        filesDropdown:Refresh(listConfigFiles())
+    end
+})
+
+-- Pilih tab pertama saat GUI dibuka
+Window:SelectTab(1)
