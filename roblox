@@ -3,9 +3,9 @@ local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/rel
 -- Create GUI Window (mobile-friendly size, no tab dropdown)
 local Window = WindUI:CreateWindow({
     Title = "Walvy Community - Fish it",
-    Icon = "rbxassetid://85693098195372",
+    Icon = "rbxassetid://85151307796718",
     IconThemed = true,
-    Author = "VERSION: VIP",
+    Author = "VERSION: Vip",
     Folder = "Walvy-Community-Fish-It",
     Size = UDim2.fromOffset(350, 450),
     Theme = "Dark",
@@ -48,7 +48,7 @@ InfoTab:Button({
 
 local AutofarmTab = Window:Tab({ 
     Title = "Auto Farm", 
-    Icon = "rbxassetid://13239226364" -- ganti sesuai pilihan
+    Icon = "fish" -- ganti sesuai pilihan
 })
 
 -- ===== Auto Fish Toggle =====
@@ -171,6 +171,338 @@ local autoSellButton = AutofarmTab:Button({
     end
 })
 
+local TpTab = Window:Tab({  
+    Title = "Teleport Tab",  
+    Icon = "map-pin"  -- bisa diganti ke "lock" atau "person"
+})
+
+local autoSellButton = TpTab:Button({
+    Title = "Kohana Lava",
+    Icon = "rbxassetid://85151307796718",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+
+        -- Target koordinat Kohana Lava
+        local targetPosition = Vector3.new(-593.32, 59.0, 130.82)
+
+        -- Teleport
+        hrp.CFrame = CFrame.new(targetPosition)
+    end
+})
+
+local autoSellButton = TpTab:Button({
+    Title = "Esotoric Island",
+    Icon = "rbxassetid://85151307796718",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+
+        local targetPosition = Vector3.new(2024.490, 27.397, 1391.620)
+
+        -- Teleport
+        hrp.CFrame = CFrame.new(targetPosition)
+    end
+})
+
+local autoSellButton = TpTab:Button({
+    Title = "Kohana",
+    Icon = "rbxassetid://85151307796718",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+
+        local targetPosition = Vector3.new(-630.300, 16.035, 597.480)
+
+        -- Teleport
+        hrp.CFrame = CFrame.new(targetPosition)
+    end
+})
+
+local autoSellButton = TpTab:Button({
+    Title = "Lost Isle",
+    Icon = "rbxassetid://85151307796718",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+
+        local targetPosition = Vector3.new(-3660.070, 5.426, -1053.020)
+
+        -- Teleport
+        hrp.CFrame = CFrame.new(targetPosition)
+    end
+})
+
+local autoSellButton = TpTab:Button({
+    Title = "Stingray Shores",
+    Icon = "rbxassetid://85151307796718",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+
+        local targetPosition = Vector3.new(45.280, 28.000, 2987.110)
+
+        -- Teleport
+        hrp.CFrame = CFrame.new(targetPosition)
+    end
+})
+
+local autoSellButton = TpTab:Button({
+    Title = "Tropical Grove",
+    Icon = "rbxassetid://85151307796718",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+
+        local targetPosition = Vector3.new(-2092.897, 6.268, 3693.929)
+
+        -- Teleport
+        hrp.CFrame = CFrame.new(targetPosition)
+    end
+})
+
+local autoSellButton = TpTab:Button({
+    Title = "Tropical Grove",
+    Icon = "rbxassetid://85151307796718",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+
+        local targetPosition = Vector3.new(-2092.897, 6.268, 3693.929)
+
+        -- Teleport
+        hrp.CFrame = CFrame.new(targetPosition)
+    end
+})
+
+local autoSellButton = TpTab:Button({
+    Title = "Weather Machine",
+    Icon = "rbxassetid://85151307796718",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+
+        local targetPosition = Vector3.new(-1495.250, 6.500, 1889.920)
+
+        -- Teleport
+        hrp.CFrame = CFrame.new(targetPosition)
+    end
+})
+
+local autoSellButton = TpTab:Button({
+    Title = "Coral Reefs",
+    Icon = "rbxassetid://85151307796718",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+
+        local targetPosition = Vector3.new(-2949.359, 63.250, 2213.966)
+
+        -- Teleport
+        hrp.CFrame = CFrame.new(targetPosition)
+    end
+})
+
+local autoSellButton = TpTab:Button({
+    Title = "Crater Island",
+    Icon = "rbxassetid://85151307796718",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+
+        local targetPosition = Vector3.new(1012.045, 22.676, 5080.221)
+
+        -- Teleport
+        hrp.CFrame = CFrame.new(targetPosition)
+    end
+})
+
+local SearchTab = Window:Tab({  
+    Title = "Teleport To Player",  
+    Icon = "user-search"  -- icon paling pas untuk pencarian user
+})
+
+
+local SpawnboatTab = Window:Tab({  
+    Title = "Spawn Boat",  
+    Icon = "ship"  -- bisa diganti ke "lock" atau "person"
+})
+
+-- Tombol Spawn Small Boat
+SpawnboatTab:Button({
+    Title = "Spawn Small Boat",
+    Icon = "ship",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+        -- Spawn boat
+        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
+        if RFSpawnBoat then
+            pcall(function()
+                RFSpawnBoat:InvokeServer(1) -- parameter sesuai Sigma Spy
+            end)
+        end
+    end
+})
+
+SpawnboatTab:Button({
+    Title = "Spawn Kayak",
+    Icon = "ship",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+        -- Spawn boat
+        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
+        if RFSpawnBoat then
+            pcall(function()
+                RFSpawnBoat:InvokeServer(2) -- parameter sesuai Sigma Spy
+            end)
+        end
+    end
+})
+
+SpawnboatTab:Button({
+    Title = "Spawn Jetski",
+    Icon = "ship",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+        -- Spawn boat
+        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
+        if RFSpawnBoat then
+            pcall(function()
+                RFSpawnBoat:InvokeServer(3) -- parameter sesuai Sigma Spy
+            end)
+        end
+    end
+})
+
+SpawnboatTab:Button({
+    Title = "Spawn Highfield",
+    Icon = "ship",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+        -- Spawn boat
+        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
+        if RFSpawnBoat then
+            pcall(function()
+                RFSpawnBoat:InvokeServer(4) -- parameter sesuai Sigma Spy
+            end)
+        end
+    end
+})
+
+SpawnboatTab:Button({
+    Title = "Spawn Speed Boat",
+    Icon = "ship",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+        -- Spawn boat
+        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
+        if RFSpawnBoat then
+            pcall(function()
+                RFSpawnBoat:InvokeServer(5) -- parameter sesuai Sigma Spy
+            end)
+        end
+    end
+})
+
+SpawnboatTab:Button({
+    Title = "Spawn Fishing Boat",
+    Icon = "ship",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+        -- Spawn boat
+        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
+        if RFSpawnBoat then
+            pcall(function()
+                RFSpawnBoat:InvokeServer(6) -- parameter sesuai Sigma Spy
+            end)
+        end
+    end
+})
+
+SpawnboatTab:Button({
+    Title = "Spawn Mini Yacht",
+    Icon = "ship",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+        -- Spawn boat
+        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
+        if RFSpawnBoat then
+            pcall(function()
+                RFSpawnBoat:InvokeServer(14) -- parameter sesuai Sigma Spy
+            end)
+        end
+    end
+})
+
+SpawnboatTab:Paragraph({
+    Title = "Gamepass Boat",
+})
+
+SpawnboatTab:Button({
+    Title = "Spawn Hyper Boat",
+    Icon = "ship",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+        -- Spawn boat
+        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
+        if RFSpawnBoat then
+            pcall(function()
+                RFSpawnBoat:InvokeServer(7) -- parameter sesuai Sigma Spy
+            end)
+        end
+    end
+})
+
+SpawnboatTab:Button({
+    Title = "Spawn Frozen Boat",
+    Icon = "ship",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+        -- Spawn boat
+        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
+        if RFSpawnBoat then
+            pcall(function()
+                RFSpawnBoat:InvokeServer(11) -- parameter sesuai Sigma Spy
+            end)
+        end
+    end
+})
+
+SpawnboatTab:Button({
+    Title = "Spawn Cruiser Boat",
+    Icon = "ship",
+    Callback = function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+        -- Spawn boat
+        local RFSpawnBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SpawnBoat"]
+        if RFSpawnBoat then
+            pcall(function()
+                RFSpawnBoat:InvokeServer(13) -- parameter sesuai Sigma Spy
+            end)
+        end
+    end
+})
+
 local AntikickTab = Window:Tab({  
     Title = "Anti Kick Tab",  
     Icon = "shield"  -- bisa diganti ke "lock" atau "person"
@@ -288,11 +620,11 @@ task.spawn(function()
         local state = data and data.TransparentMode or true
         transparentToggle:Set(state)
         Window:ToggleTransparency(state)
-        WindUI.TransparencyValue = state and 0.3 or 1
+        WindUI.TransparencyValue = state and 0,8 or 1
     else
         transparentToggle:Set(true)
         Window:ToggleTransparency(true)
-        WindUI.TransparencyValue = 0.3
+        WindUI.TransparencyValue = 0.8
     end
 end)
 
