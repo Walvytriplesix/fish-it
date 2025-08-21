@@ -3,9 +3,9 @@ local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/rel
 -- Create GUI Window (mobile-friendly size, no tab dropdown, slightly transparent)
 local Window = WindUI:CreateWindow({
     Title = "Walvy Community - Fish it",
-    Icon = "rbxassetid://85151307796718",
+    Icon = "rbxassetid://85693098195372",
     IconThemed = true,
-    Author = "VERSION: Vip",
+    Author = "VERSION: VIP",
     Folder = "Walvy-Community-Fish-It",
     Size = UDim2.fromOffset(350, 450),
     Theme = "Dark",
