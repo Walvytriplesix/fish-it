@@ -1,0 +1,54 @@
+-- Fishing Radar Always On
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Lighting = game:GetService("Lighting")
+
+local Replion = require(ReplicatedStorage.Packages.Replion)
+local Net = require(ReplicatedStorage.Packages.Net)
+local SPR = require(ReplicatedStorage.Packages.spr)
+local Soundbook = require(ReplicatedStorage.Shared.Soundbook)
+local ClientTime = require(ReplicatedStorage.Controllers.ClientTimeController)
+local TextNotification = require(ReplicatedStorage.Controllers.TextNotificationController)
+
+local UpdateFishingRadar = Net:RemoteFunction("UpdateFishingRadar")
+
+-- Force radar always enabled
+local function EnableRadar()
+    local clientData = Replion.Client:GetReplion("Data")
+    if not clientData then return end
+
+    local radarStatus = true  -- selalu enabled
+    if clientData:Get("RegionsVisible") ~= radarStatus then
+        if UpdateFishingRadar:InvokeServer(radarStatus) then
+            -- Play radar toggle sound
+            Soundbook.Sounds.RadarToggle:Play().PlaybackSpeed = 1 + math.random() * 0.3
+
+            -- Adjust lighting
+            local ccEffect = Lighting:FindFirstChildWhichIsA("ColorCorrectionEffect")
+            if ccEffect then
+                SPR.stop(ccEffect)
+                local lightingProfile = ClientTime:_getLightingProfile()
+                local targetSettings = (lightingProfile and lightingProfile.ColorCorrection) or {}
+                targetSettings.Brightness = targetSettings.Brightness or 0.04
+                targetSettings.TintColor = targetSettings.TintColor or Color3.fromRGB(255, 255, 255)
+                
+                ccEffect.TintColor = Color3.fromRGB(42, 226, 118)
+                ccEffect.Brightness = 0.4
+                SPR.target(ccEffect, 1, 1, targetSettings)
+            end
+
+            SPR.stop(Lighting)
+            Lighting.ExposureCompensation = 1
+            SPR.target(Lighting, 1, 2, {ExposureCompensation = 0})
+
+            -- Show notification
+            TextNotification:DeliverNotification({
+                Type = "Text",
+                Text = "Radar: Enabled",
+                TextColor = {R = 9, G = 255, B = 0}
+            })
+        end
+    end
+end
+
+-- Jalankan radar selalu aktif setiap frame
+game:GetService("RunService").RenderStepped:Connect(EnableRadar)
