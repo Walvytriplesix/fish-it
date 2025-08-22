@@ -165,9 +165,6 @@ AutofarmTab:Paragraph({
     Title = "ANTI KICK",
 })
 
--- [[ Variable to control back-and-forth movement ]]
-local moveForward = true
-
 local antiKickToggle = AutofarmTab:Toggle({
     Title = "Anti Kick",
     Value = false,
@@ -175,79 +172,12 @@ local antiKickToggle = AutofarmTab:Toggle({
         local player = game.Players.LocalPlayer
 
         if state then
-            -- [Method 1: Reactive] Use VirtualUser when idle is detected
-            _G.AntiKickConnection = player.Idled:Connect(function()
-                local vu = game:GetService("VirtualUser")
-                vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-                task.wait(0.1) -- short delay
-                vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-            end)
+            -- Simpan posisi awal
+            local initialPos
+            local char = player.Character or player.CharacterAdded:Wait()
+            local hrp = char:WaitForChild("HumanoidRootPart")
+            initialPos = hrp.Position
 
-            -- [Method 2: Proactive] Jump + small movement loop
-            _G.AutoJumpEnabled = true
-            task.spawn(function()
-                while _G.AutoJumpEnabled do
-                    task.wait(5) -- Interval can be adjusted, 5-10s is safe
-
-                    if not _G.AutoJumpEnabled then break end -- Extra check to stop the loop
-
-                    local char = player.Character
-                    if char then
-                        local humanoid = char:FindFirstChild("Humanoid")
-                        local hrp = char:FindFirstChild("HumanoidRootPart")
-                        
-                        -- Jump action
-                        if humanoid and humanoid.Health > 0 then
-                            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-                        end
-                        
-                        -- Back-and-forth small movement
-                        if hrp then
-                            if moveForward then
-                                hrp.CFrame = hrp.CFrame * CFrame.new(0.1, 0, 0)
-                            else
-                                hrp.CFrame = hrp.CFrame * CFrame.new(-0.1, 0, 0)
-                            end
-                            moveForward = not moveForward -- Reverse direction for next execution
-                        end
-                    end
-                end
-            end)
-
-            WindUI:Notify({
-                Title = "Anti-Kick",
-                Content = "Enabled: AFK protection active.",
-                Duration = 3
-            })
-        else
-            -- Disable all connections and loops
-            if _G.AntiKickConnection then
-                _G.AntiKickConnection:Disconnect()
-                _G.AntiKickConnection = nil
-            end
-            _G.AutoJumpEnabled = false
-
-            WindUI:Notify({
-                Title = "Anti-Kick",
-                Content = "Disabled",
-                Duration = 3
-            })
-        end
-    end
-})
-
--- Anti-Kick v2: Modern, smaller movement, safer interval
-local antiKickv2Toggle = AutofarmTab:Toggle({
-    Title = "Anti Kick v2",
-    Value = false,
-    Callback = function(state)
-        local Players = game:GetService("Players")
-        local player = Players.LocalPlayer
-
-        -- Default interval in seconds
-        local interval = 5  
-
-        if state then
             -- Anti-AFK VirtualUser
             _G.AntiKickConnection = player.Idled:Connect(function()
                 local vu = game:GetService("VirtualUser")
@@ -255,26 +185,86 @@ local antiKickv2Toggle = AutofarmTab:Toggle({
                 vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
             end)
 
-            -- Auto jump + small movement loop
+            -- Auto Jump + small random movement loop
             _G.AutoJumpEnabled = true
             spawn(function()
                 while _G.AutoJumpEnabled do
-                    task.wait(interval)
-                    local char = player.Character or player.CharacterAdded:Wait()
+                    task.wait(5) -- interval 5 detik
+                    local char = player.Character
+                    if not char then break end
                     local humanoid = char:FindFirstChild("Humanoid")
                     local hrp = char:FindFirstChild("HumanoidRootPart")
                     if humanoid and humanoid.Health > 0 then
                         humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
                     end
                     if hrp then
-                        hrp.CFrame = hrp.CFrame * CFrame.new(0.05,0,0) -- smaller movement but still active
+                        -- Gerakan kecil acak bolak-balik
+                        local offsetX = math.random(-2,2)/10 -- ±0.2 studs
+                        local offsetZ = math.random(-2,2)/10
+                        hrp.CFrame = hrp.CFrame * CFrame.new(offsetX,0,offsetZ)
+                        task.wait(0.1)
+                        -- Kembali ke posisi awal
+                        hrp.CFrame = CFrame.new(initialPos) * CFrame.new(0,hrp.Position.Y - initialPos.Y,0)
+                    end
+                end
+            end)
+
+            WindUI:Notify({
+                Title = "Anti-Kick + Auto Jump",
+                Content = "Enabled: Anti-Kick active with random movements",
+                Duration = 3
+            })
+        else
+            -- Matikan loop & disconnect Idled
+            if _G.AntiKickConnection then
+                _G.AntiKickConnection:Disconnect()
+                _G.AntiKickConnection = nil
+            end
+            _G.AutoJumpEnabled = false
+
+            WindUI:Notify({
+                Title = "Anti-Kick + Auto Jump",
+                Content = "Disabled",
+                Duration = 3
+            })
+        end
+    end
+})
+
+local antiKickv2Toggle = AutofarmTab:Toggle({
+    Title = "Anti Kick v2",
+    Value = false,
+    Callback = function(state)
+        local player = game.Players.LocalPlayer
+
+        if state then
+            -- VirtualUser Anti-AFK (reactive)
+            _G.AntiKickConnection = player.Idled:Connect(function()
+                local vu = game:GetService("VirtualUser")
+                vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                task.wait(0.1)
+                vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            end)
+
+            -- Loop jump with random small interval
+            _G.AutoJumpEnabled = true
+            task.spawn(function()
+                while _G.AutoJumpEnabled do
+                    local interval = math.random(4,8) -- random interval 4-8s
+                    task.wait(interval)
+                    local char = player.Character
+                    if char then
+                        local humanoid = char:FindFirstChild("Humanoid")
+                        if humanoid and humanoid.Health > 0 then
+                            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                        end
                     end
                 end
             end)
 
             WindUI:Notify({
                 Title = "Anti-Kick v2",
-                Content = "Enabled: AFK-safe with interval "..interval.."s",
+                Content = "Enabled: AFK-safe (jumping every few seconds)",
                 Duration = 3
             })
         else
