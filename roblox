@@ -172,11 +172,11 @@ local antiKickToggle = AutofarmTab:Toggle({
         local player = game.Players.LocalPlayer
 
         if state then
-            -- Simpan posisi awal
-            local initialPos
+            -- Ambil karakter & HumanoidRootPart
             local char = player.Character or player.CharacterAdded:Wait()
             local hrp = char:WaitForChild("HumanoidRootPart")
-            initialPos = hrp.Position
+            local initialPos = hrp.Position
+            local initialCFrame = hrp.CFrame -- simpan orientasi awal
 
             -- Anti-AFK VirtualUser
             _G.AntiKickConnection = player.Idled:Connect(function()
@@ -185,7 +185,7 @@ local antiKickToggle = AutofarmTab:Toggle({
                 vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
             end)
 
-            -- Auto Jump + small random movement loop
+            -- Auto Jump + pergerakan horizontal random
             _G.AutoJumpEnabled = true
             spawn(function()
                 while _G.AutoJumpEnabled do
@@ -198,20 +198,25 @@ local antiKickToggle = AutofarmTab:Toggle({
                         humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
                     end
                     if hrp then
-                        -- Gerakan kecil acak bolak-balik
+                        -- Pergerakan horizontal acak
                         local offsetX = math.random(-2,2)/10 -- ±0.2 studs
                         local offsetZ = math.random(-2,2)/10
-                        hrp.CFrame = hrp.CFrame * CFrame.new(offsetX,0,offsetZ)
+                        local newPos = hrp.Position + Vector3.new(offsetX, 0, offsetZ)
+                        hrp.CFrame = CFrame.lookAt(newPos, newPos + initialCFrame.LookVector)
+
                         task.wait(0.1)
-                        -- Kembali ke posisi awal
-                        hrp.CFrame = CFrame.new(initialPos) * CFrame.new(0,hrp.Position.Y - initialPos.Y,0)
+
+                        -- Kembali ke posisi awal tetap menghadap depan
+                        local currentY = hrp.Position.Y
+                        hrp.CFrame = CFrame.lookAt(initialPos + Vector3.new(0, currentY - initialPos.Y, 0), 
+                                                   initialPos + Vector3.new(0, currentY - initialPos.Y, 0) + initialCFrame.LookVector)
                     end
                 end
             end)
 
             WindUI:Notify({
                 Title = "Anti-Kick + Auto Jump",
-                Content = "Enabled: Anti-Kick active with random movements",
+                Content = "Enabled: Anti-Kick active with random horizontal movements",
                 Duration = 3
             })
         else
@@ -583,6 +588,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RFPurchaseFishingRod = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/PurchaseFishingRod"]
 local RFPurchaseBait = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/PurchaseBait"]
 local RFPurchaseWeatherEvent = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/PurchaseWeatherEvent"]
+local RFPurchaseBoat = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/PurchaseBoat"]
 
 -- ===== Rod Data =====
 local rods = {
@@ -808,6 +814,112 @@ BuyRodTab:Button({
                     Title="Weather Purchase Error",
                     Content=tostring(err),
                     Duration=5
+                })
+            end
+        end
+    end
+})
+
+-- ===== Paragraph =====
+BuyRodTab:Paragraph({
+    Title="Buy Boat",
+    Desc="Select a Boat to purchase."
+})
+
+-- Urutan boat
+local boatOrder = {
+    "Small Boat",
+    "Kayak",
+    "Jetski",
+    "Highfield",
+    "Speed Boat",
+    "Fishing Boat",
+    "Mini Yacht",
+    "Hyper Boat",
+    "Frozen Boat",
+    "Cruiser Boat"
+}
+
+-- Data boat
+local boats = {
+    ["Small Boat"] = {Id = 1, Price = 300},
+    ["Kayak"] = {Id = 2, Price = 1100},
+    ["Jetski"] = {Id = 3, Price = 7500},
+    ["Highfield"] = {Id = 4, Price = 25000},
+    ["Speed Boat"] = {Id = 5, Price = 70000},
+    ["Fishing Boat"] = {Id = 6, Price = 180000},
+    ["Mini Yacht"] = {Id = 14, Price = 1200000},
+    ["Hyper Boat"] = {Id = 7, Price = 999000},
+    ["Frozen Boat"] = {Id = 11, Price = 0},
+    ["Cruiser Boat"] = {Id = 13, Price = 0}
+}
+
+-- Buat display names sesuai urutan
+local boatNames = {}
+for _, name in ipairs(boatOrder) do
+    local data = boats[name]
+    local priceStr
+    if data.Price >= 1000000 then
+        priceStr = string.format("$%.2fM", data.Price/1000000)
+    elseif data.Price >= 1000 then
+        priceStr = string.format("$%.0fk", data.Price/1000)
+    else
+        priceStr = "$"..data.Price
+    end
+    table.insert(boatNames, name.." ("..priceStr..")")
+end
+
+-- Buat keyMap sesuai urutan
+local boatKeyMap = {}
+for _, displayName in ipairs(boatNames) do
+    local nameOnly = displayName:match("^(.-) %(") -- ambil nama sebelum tanda '('
+    boatKeyMap[displayName] = nameOnly
+end
+
+-- Selected default
+local selectedBoat = boatNames[1]
+
+-- ===== Paragraph =====
+BuyRodTab:Paragraph({
+    Title="Buy Boat",
+    Desc="Select a Boat to purchase."
+})
+
+-- ===== Dropdown =====
+BuyRodTab:Dropdown({
+    Title = "Select Boat",
+    Values = boatNames,
+    Value = selectedBoat,
+    Callback = function(value)
+        selectedBoat = value
+        WindUI:Notify({
+            Title = "Boat Selected",
+            Content = value,
+            Duration = 3
+        })
+    end
+})
+
+-- ===== Tombol Buy Boat =====
+BuyRodTab:Button({
+    Title = "Buy Boat",
+    Callback = function()
+        local key = boatKeyMap[selectedBoat]
+        if key and boats[key] then
+            local success, err = pcall(function()
+                RFPurchaseBoat:InvokeServer(boats[key].Id)
+            end)
+            if success then
+                WindUI:Notify({
+                    Title = "Boat Purchase",
+                    Content = "Purchased "..selectedBoat,
+                    Duration = 3
+                })
+            else
+                WindUI:Notify({
+                    Title = "Boat Purchase Error",
+                    Content = tostring(err),
+                    Duration = 5
                 })
             end
         end
