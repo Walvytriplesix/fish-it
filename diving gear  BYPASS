@@ -1,0 +1,51 @@
+-- buAT ON
+  local v1 = game:GetService("ReplicatedStorage")
+local u3 = require(v1.Packages.Replion)
+local v4 = require(v1.Packages.Net)
+local v6 = require(v1.Shared.ItemUtility)
+local u7 = require(v1.Shared.Soundbook)
+local u8 = require(v1.Controllers.TextNotificationController)
+
+local u9 = v4:RemoteFunction("EquipOxygenTank")
+local u11 = v6:GetItemData("Diving Gear")
+
+if u11 then
+    local v12 = u3.Client:GetReplion("Data")
+    if v12 and v12:Get("EquippedOxygenTankId") ~= u11.Data.Id then
+        local success = u9:InvokeServer(u11.Data.Id)
+        if success then
+            u7.Sounds.DivingToggle:Play().PlaybackSpeed = 1 + math.random() * 0.3
+            u8:DeliverNotification({
+                ["Type"] = "Text",
+                ["Text"] = "Diving Gear: On",
+                ["TextColor"] = {R = 9, G = 255, B = 0}
+            })
+        end
+    end
+end
+
+-- buat off
+local v1 = game:GetService("ReplicatedStorage")
+local v3 = require(v1.Packages.Replion)
+local v4 = require(v1.Packages.Net)
+local v6 = require(v1.Shared.ItemUtility)
+local u7 = require(v1.Shared.Soundbook)
+local u8 = require(v1.Controllers.TextNotificationController)
+
+local u10 = v4:RemoteFunction("UnequipOxygenTank")
+local u11 = v6:GetItemData("Diving Gear")
+
+if u11 then
+    local v12 = v3.Client:GetReplion("Data")
+    if v12 and v12:Get("EquippedOxygenTankId") == u11.Data.Id then
+        local success = u10:InvokeServer()
+        if success then
+            u7.Sounds.DivingToggle:Play().PlaybackSpeed = 1 + math.random() * 0.3
+            u8:DeliverNotification({
+                ["Type"] = "Text",
+                ["Text"] = "Diving Gear: Off",
+                ["TextColor"] = {R = 255, G = 0, B = 0}
+            })
+        end
+    end
+end
