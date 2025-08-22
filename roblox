@@ -1,3 +1,55 @@
+-- Server Script (ditempatkan di ServerScriptService)
+local Players = game:GetService("Players")
+local ALLOWED_SCRIPT_URL = "https://raw.githubusercontent.com/Walvy666/Fish-It/main/Walvy-Community"
+
+-- Fungsi untuk memeriksa apakah pemain melakukan tindakan mencurigakan
+local function checkPlayerBehavior(player)
+    -- Contoh: Memeriksa kecepatan gerakan pemain (misalnya, untuk game Fish-It)
+    local character = player.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            -- Misalnya, kecepatan normal maksimum adalah 16 (default Roblox walkspeed)
+            if humanoid.WalkSpeed > 16 then
+                player:Kick("Dont Using Another Script")
+                return
+            end
+
+            -- Contoh lain: Memeriksa posisi pemain yang tidak wajar
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            if rootPart then
+                local position = rootPart.Position
+                -- Misalnya, area permainan hanya di Y > 0
+                if position.Y < 0 then
+                    player:Kick("Detected unauthorized script usage: Invalid position.")
+                    return
+                end
+            end
+        end
+    end
+end
+
+-- Fungsi untuk memeriksa semua pemain secara berkala
+local function monitorPlayers()
+    while true do
+        for _, player in pairs(Players:GetPlayers()) do
+            checkPlayerBehavior(player)
+        end
+        wait(1) -- Periksa setiap 1 detik
+    end
+end
+
+-- Hubungkan ke event saat pemain bergabung
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        -- Mulai memantau perilaku pemain
+        checkPlayerBehavior(player)
+    end)
+end)
+
+-- Jalankan pemantauan berkala
+spawn(monitorPlayers)
+
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
 -- Create GUI Window (mobile-friendly size, no tab dropdown, slightly transparent)
@@ -40,6 +92,76 @@ InfoTab:Button({
 local AutofarmTab = Window:Tab({ 
     Title = "Auto Farm", 
     Icon = "fish"
+})
+
+-- Toggle Fishing Radar
+AutofarmTab:Toggle({
+    Title = "Fishing Radar",
+    Desc = "Bypass Fishing Radar",
+    Default = false,
+    Callback = function(state)
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local Lighting = game:GetService("Lighting")
+
+        local Replion = require(ReplicatedStorage.Packages.Replion)
+        local Net = require(ReplicatedStorage.Packages.Net)
+        local SPR = require(ReplicatedStorage.Packages.spr)
+        local Soundbook = require(ReplicatedStorage.Shared.Soundbook)
+        local ClientTime = require(ReplicatedStorage.Controllers.ClientTimeController)
+        local TextNotification = require(ReplicatedStorage.Controllers.TextNotificationController)
+
+        local UpdateFishingRadar = Net:RemoteFunction("UpdateFishingRadar")
+
+        local function SetRadar(enable)
+            local clientData = Replion.Client:GetReplion("Data")
+            if not clientData then return end
+
+            if clientData:Get("RegionsVisible") ~= enable then
+                if UpdateFishingRadar:InvokeServer(enable) then
+                    Soundbook.Sounds.RadarToggle:Play().PlaybackSpeed = 1 + math.random() * 0.3
+
+                    -- Adjust lighting when enabling
+                    if enable then
+                        local ccEffect = Lighting:FindFirstChildWhichIsA("ColorCorrectionEffect")
+                        if ccEffect then
+                            SPR.stop(ccEffect)
+                            local lightingProfile = ClientTime:_getLightingProfile()
+                            local targetSettings = (lightingProfile and lightingProfile.ColorCorrection) or {}
+                            targetSettings.Brightness = targetSettings.Brightness or 0.04
+                            targetSettings.TintColor = targetSettings.TintColor or Color3.fromRGB(255, 255, 255)
+
+                            ccEffect.TintColor = Color3.fromRGB(42, 226, 118)
+                            ccEffect.Brightness = 0.4
+                            SPR.target(ccEffect, 1, 1, targetSettings)
+                        end
+
+                        SPR.stop(Lighting)
+                        Lighting.ExposureCompensation = 1
+                        SPR.target(Lighting, 1, 2, {ExposureCompensation = 0})
+                    end
+
+                    -- Notification
+                    TextNotification:DeliverNotification({
+                        Type = "Text",
+                        Text = "Radar: "..(enable and "Enabled" or "Disabled"),
+                        TextColor = enable and {R = 9, G = 255, B = 0} or {R = 255, G = 0, B = 0}
+                    })
+                end
+            end
+        end
+
+        -- Toggle ON/OFF
+        if state then
+            SetRadar(true)
+        else
+            SetRadar(false)
+        end
+    end
+})
+
+-- Paragraph with description
+AutofarmTab:Paragraph({
+    Title = "Auto Farm",
 })
 
 -- ===== Auto Fish Toggle =====
@@ -162,7 +284,7 @@ local sellAllButton = AutofarmTab:Button({
 })
 
 AutofarmTab:Paragraph({
-    Title = "ANTI KICK",
+    Title = "Anti Kicked From Server",
 })
 
 local antiKickToggle = AutofarmTab:Toggle({
@@ -236,55 +358,110 @@ local antiKickToggle = AutofarmTab:Toggle({
     end
 })
 
-local antiKickv2Toggle = AutofarmTab:Toggle({
-    Title = "Anti Kick v2",
-    Value = false,
-    Callback = function(state)
-        local player = game.Players.LocalPlayer
+local changestatsTab = Window:Tab({ 
+    Title = "Change Rod Stats", 
+    Icon = "file-text" 
+})
 
-        if state then
-            -- VirtualUser Anti-AFK (reactive)
-            _G.AntiKickConnection = player.Idled:Connect(function()
-                local vu = game:GetService("VirtualUser")
-                vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-                task.wait(0.1)
-                vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-            end)
+-- ===== Paragraph =====
+changestatsTab:Paragraph({
+    Title="Rod Modifier",
+    Desc="Select a Rod to apply max stats."
+})
 
-            -- Loop jump with random small interval
-            _G.AutoJumpEnabled = true
-            task.spawn(function()
-                while _G.AutoJumpEnabled do
-                    local interval = math.random(4,8) -- random interval 4-8s
-                    task.wait(interval)
-                    local char = player.Character
-                    if char then
-                        local humanoid = char:FindFirstChild("Humanoid")
-                        if humanoid and humanoid.Health > 0 then
-                            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+local rodDisplayOrder = {
+    "Luck Rod",
+    "Carbon Rod",
+    "Grass Rod",
+    "Demascus Rod",
+    "Ice Rod",
+    "Lucky Rod",
+    "Midnight Rod",
+    "Steampunk Rod",
+    "Chrome Rod",
+    "Astral Rod",
+    "Ares Rod",
+    "Angler Rod"
+}
+
+-- Mapping display name ke modul asli (dengan !!!)
+local rodKeyMap = {
+    ["Luck Rod"] = "!!! Luck Rod",
+    ["Carbon Rod"] = "!!! Carbon Rod",
+    ["Grass Rod"] = "!!! Grass Rod",
+    ["Demascus Rod"] = "!!! Demascus Rod",
+    ["Ice Rod"] = "!!! Ice Rod",
+    ["Lucky Rod"] = "!!! Lucky Rod",
+    ["Midnight Rod"] = "!!! Midnight Rod",
+    ["Steampunk Rod"] = "!!! Steampunk Rod",
+    ["Chrome Rod"] = "!!! Chrome Rod",
+    ["Astral Rod"] = "!!! Astral Rod",
+    ["Ares Rod"] = "!!! Ares Rod",
+    ["Angler Rod"] = "!!! Angler Rod"
+}
+
+-- Selected default
+local selectedRod = rodDisplayOrder[1]
+
+-- ===== Dropdown =====
+changestatsTab:Dropdown({
+    Title = "Select Rod",
+    Values = rodDisplayOrder,
+    Value = selectedRod,
+    Callback = function(value)
+        selectedRod = value
+        WindUI:Notify({
+            Title = "Rod Selected",
+            Content = value,
+            Duration = 3
+        })
+    end
+})
+
+-- ===== Tombol Apply Max Stats =====
+changestatsTab:Button({
+    Title = "Apply Max Stats",
+    Callback = function()
+        local moduleName = rodKeyMap[selectedRod] -- modul asli dengan !!!
+        if moduleName then
+            local success, err = pcall(function()
+                local ReplicatedStorage = game:GetService("ReplicatedStorage")
+                local rodModule = ReplicatedStorage.Items:FindFirstChild(moduleName)
+                
+                if rodModule and rodModule:IsA("ModuleScript") then
+                    local rodData = require(rodModule)
+                    
+                    rodData.VisualClickPowerPercent = 999999
+                    rodData.ClickPower = 999999
+                    rodData.Resilience = 999999
+                    rodData.Windup = NumberRange.new(0.01,0.01)
+                    rodData.MaxWeight = 999999
+
+                    if rodData.RollData then
+                        rodData.RollData.BaseLuck = 999999
+                        if rodData.RollData.Frequency then
+                            rodData.RollData.Frequency.Golden = 999999
+                            rodData.RollData.Frequency.Rainbow = 999999
                         end
                     end
+                else
+                    warn("Module "..moduleName.." tidak ditemukan!")
                 end
             end)
 
-            WindUI:Notify({
-                Title = "Anti-Kick v2",
-                Content = "Enabled: AFK-safe (jumping every few seconds)",
-                Duration = 3
-            })
-        else
-            -- Disable loop & disconnect Idled
-            if _G.AntiKickConnection then
-                _G.AntiKickConnection:Disconnect()
-                _G.AntiKickConnection = nil
+            if success then
+                WindUI:Notify({
+                    Title = "Rod Modifier",
+                    Content = selectedRod.." max stats applied!",
+                    Duration = 3
+                })
+            else
+                WindUI:Notify({
+                    Title = "Rod Modifier Error",
+                    Content = tostring(err),
+                    Duration = 5
+                })
             end
-            _G.AutoJumpEnabled = false
-
-            WindUI:Notify({
-                Title = "Anti-Kick v2",
-                Content = "Disabled",
-                Duration = 3
-            })
         end
     end
 })
@@ -355,6 +532,56 @@ TpTab:Button({
                 local hrp = character:WaitForChild("HumanoidRootPart")
                 hrp.CFrame = CFrame.new(loc.Position)
                 WindUI:Notify({Title="Teleported", Content="Teleported to "..loc.Title, Duration=3})
+            end
+        end
+    end
+})
+
+-- Toggle Diving Gear ON/OFF
+TpTab:Toggle({
+    Title = "Diving Gear",
+    Desc = "Using diving gear without buying it",
+    Default = false,
+    Callback = function(state)
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local Replion = require(ReplicatedStorage.Packages.Replion)
+        local Net = require(ReplicatedStorage.Packages.Net)
+        local ItemUtility = require(ReplicatedStorage.Shared.ItemUtility)
+        local Soundbook = require(ReplicatedStorage.Shared.Soundbook)
+        local NotificationController = require(ReplicatedStorage.Controllers.TextNotificationController)
+
+        local DivingGear = ItemUtility:GetItemData("Diving Gear")
+        if not DivingGear then return end
+
+        local ReplionData = Replion.Client:GetReplion("Data")
+
+        if state then
+            -- ON
+            if ReplionData:Get("EquippedOxygenTankId") ~= DivingGear.Data.Id then
+                local EquipFunc = Net:RemoteFunction("EquipOxygenTank")
+                local success = EquipFunc:InvokeServer(DivingGear.Data.Id)
+                if success then
+                    Soundbook.Sounds.DivingToggle:Play().PlaybackSpeed = 1 + math.random() * 0.3
+                    NotificationController:DeliverNotification({
+                        Type = "Text",
+                        Text = "Diving Gear: On",
+                        TextColor = {R = 9, G = 255, B = 0}
+                    })
+                end
+            end
+        else
+            -- OFF
+            if ReplionData:Get("EquippedOxygenTankId") == DivingGear.Data.Id then
+                local UnequipFunc = Net:RemoteFunction("UnequipOxygenTank")
+                local success = UnequipFunc:InvokeServer()
+                if success then
+                    Soundbook.Sounds.DivingToggle:Play().PlaybackSpeed = 1 + math.random() * 0.3
+                    NotificationController:DeliverNotification({
+                        Type = "Text",
+                        Text = "Diving Gear: Off",
+                        TextColor = {R = 255, G = 0, B = 0}
+                    })
+                end
             end
         end
     end
@@ -527,6 +754,43 @@ end
 
 -- Default selected boat
 local selectedBoat = boatNames[1]
+
+-- Paragraph
+SpawnBoatTab:Paragraph({
+    Title = "Set All Boat Speed 1000",
+})
+
+-- Toggle
+SpawnBoatTab:Toggle({
+    Title = "Super Speed Boats",
+    Default = false,
+    Callback = function(state)
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local BoatsModule = require(ReplicatedStorage.Shared.BoatsHandlingData)
+
+        -- Simpan Speed asli untuk restore
+        if not BoatsModule._OriginalSpeed then
+            BoatsModule._OriginalSpeed = {}
+            for boatName, boatData in pairs(BoatsModule) do
+                BoatsModule._OriginalSpeed[boatName] = boatData.Speed
+            end
+        end
+
+        if state then
+            -- ON: Set semua boat Speed = 1000
+            for _, boatData in pairs(BoatsModule) do
+                boatData.Speed = 1000
+            end
+        else
+            -- OFF: Restore Speed asli
+            for boatName, boatData in pairs(BoatsModule) do
+                if BoatsModule._OriginalSpeed[boatName] then
+                    boatData.Speed = BoatsModule._OriginalSpeed[boatName]
+                end
+            end
+        end
+    end
+})
 
 -- Paragraph
 SpawnBoatTab:Paragraph({
@@ -939,9 +1203,9 @@ karakterTab:Paragraph({
 karakterTab:Slider({
     Title = "Speed Hack",
     Value = {
-        Min = 16,
+        Min = 18,
         Max = 200,
-        Default = 16
+        Default = 18
     },
     Callback = function(value)
         local player = game.Players.LocalPlayer
@@ -966,41 +1230,54 @@ karakterTab:Button({
         local char = player.Character or player.CharacterAdded:Wait()
         local humanoid = char:FindFirstChild("Humanoid")
         if humanoid then
-            humanoid.WalkSpeed = 16
+            humanoid.WalkSpeed = 18
         end
         WindUI:Notify({
             Title = "SpeedHack Reset",
-            Content = "WalkSpeed dikembalikan ke normal (16)",
+            Content = "WalkSpeed dikembalikan ke normal (18)",
             Duration = 2
         })
     end
 })
 
 -- ===== Infinity Jump Toggle (Android-friendly) =====
-karakterTab:Toggle({
+-- ===== Infinity Jump Toggle (Android Friendly) =====
+local infinityJumpToggle = karakterTab:Toggle({
     Title = "Infinity Jump",
-    Desc = "Jump infinitely (Android compatible)",
+    Desc = "Allows you to jump infinitely on Android while tapping screen.",
     Value = false,
     Callback = function(state)
         _G.InfinityJumpEnabled = state
 
+        local UserInputService = game:GetService("UserInputService")
+
         if state then
-            -- Loop check humanoid state instead of JumpRequest
-            _G.InfinityJumpConnection = game:GetService("RunService").Heartbeat:Connect(function()
+            -- Connect touch input for Android
+            _G.InfinityJumpConnection = UserInputService.TouchStarted:Connect(function(touch, gameProcessed)
+                if gameProcessed then return end
                 local player = game.Players.LocalPlayer
                 local char = player.Character or player.CharacterAdded:Wait()
                 local humanoid = char:FindFirstChild("Humanoid")
-                if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+                if humanoid and humanoid.Health > 0 then
                     humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
                 end
             end)
-            WindUI:Notify({Title = "Infinity Jump", Content = "Enabled", Duration = 3})
+
+            WindUI:Notify({
+                Title = "Infinity Jump",
+                Content = "Enabled",
+                Duration = 3
+            })
         else
             if _G.InfinityJumpConnection then
                 _G.InfinityJumpConnection:Disconnect()
                 _G.InfinityJumpConnection = nil
             end
-            WindUI:Notify({Title = "Infinity Jump", Content = "Disabled", Duration = 3})
+            WindUI:Notify({
+                Title = "Infinity Jump",
+                Content = "Disabled",
+                Duration = 3
+            })
         end
     end
 })
@@ -1106,6 +1383,233 @@ karakterTab:Toggle({
         end
     end
 })
+
+karakterTab:Paragraph({
+    Title = "Visual / ESP",
+})
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+
+-- Folder untuk ESP
+local ESPFolder = Instance.new("Folder")
+ESPFolder.Name = "PlayerESP"
+ESPFolder.Parent = CoreGui
+
+local playerESPEnabled = false
+
+-- Fungsi membuat ESP (hanya dipanggil saat toggle ON)
+local function CreatePlayerESP(player)
+    if player == LocalPlayer or ESPFolder:FindFirstChild(player.Name) then return end
+    local character = player.Character
+    if not character then return end
+    local head = character:FindFirstChild("Head")
+    if not head then return end
+
+    local container = Instance.new("Folder")
+    container.Name = player.Name
+    container.Parent = ESPFolder
+
+    -- Highlight biru
+    local highlight = Instance.new("Highlight")
+    highlight.Adornee = character
+    highlight.FillTransparency = 1
+    highlight.OutlineColor = Color3.fromRGB(0, 170, 255) -- BIRU
+    highlight.OutlineTransparency = 0
+    highlight.Parent = container
+
+    -- NameTag
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "NameTag"
+    billboard.Adornee = head
+    billboard.Size = UDim2.new(0, 100, 0, 20)
+    billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = container
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(1, 0, 1, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = player.Name
+    nameLabel.TextColor3 = Color3.new(1, 1, 1) -- Putih
+    nameLabel.TextStrokeTransparency = 0
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextScaled = true
+    nameLabel.Parent = billboard
+end
+
+-- Hapus semua ESP
+local function ClearESP()
+    ESPFolder:ClearAllChildren()
+end
+
+-- Mulai ESP loop
+local connection
+local function StartESP()
+    if connection then return end
+    connection = RunService.Heartbeat:Connect(function()
+        if playerESPEnabled then
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character then
+                    if not ESPFolder:FindFirstChild(player.Name) then
+                        CreatePlayerESP(player)
+                    end
+                end
+            end
+        else
+            ClearESP()
+            if connection then
+                connection:Disconnect()
+                connection = nil
+            end
+        end
+    end)
+end
+
+-- Toggle GUI
+karakterTab:Toggle({
+    Title = "Player ESP",
+    Desc = "Show ESP for Other Players with Blue Outline and White NameTag",
+    Value = false,
+    Callback = function(state)
+        playerESPEnabled = state
+        if state then
+            StartESP()
+        else
+            ClearESP()
+            if connection then
+                connection:Disconnect()
+                connection = nil
+            end
+        end
+    end
+})
+
+-- Hapus ESP saat pemain keluar
+Players.PlayerRemoving:Connect(function(player)
+    local esp = ESPFolder:FindFirstChild(player.Name)
+    if esp then esp:Destroy() end
+end)
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+
+-- Folder untuk ESP
+local ESPFolder = Instance.new("Folder")
+ESPFolder.Name = "PlayerESP"
+ESPFolder.Parent = CoreGui
+
+local playerESPEnabled = false
+local hue = 0
+
+-- Fungsi membuat ESP
+local function CreatePlayerESP(player)
+    if player == LocalPlayer or ESPFolder:FindFirstChild(player.Name) then return end
+    local character = player.Character
+    if not character then return end
+    local head = character:FindFirstChild("Head")
+    if not head then return end
+
+    local container = Instance.new("Folder")
+    container.Name = player.Name
+    container.Parent = ESPFolder
+
+    -- Highlight rainbow
+    local highlight = Instance.new("Highlight")
+    highlight.Adornee = character
+    highlight.FillTransparency = 1
+    highlight.OutlineColor = Color3.fromHSV(hue/360, 1, 1)
+    highlight.OutlineTransparency = 0
+    highlight.Parent = container
+
+    -- NameTag
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "NameTag"
+    billboard.Adornee = head
+    billboard.Size = UDim2.new(0, 100, 0, 20)
+    billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = container
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(1, 0, 1, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = player.Name
+    nameLabel.TextColor3 = Color3.new(1, 1, 1)
+    nameLabel.TextStrokeTransparency = 0
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextScaled = true
+    nameLabel.Parent = billboard
+end
+
+-- Update warna ESP (rainbow)
+local function UpdateESPColors()
+    hue = (hue + 5) % 360
+    for _, container in pairs(ESPFolder:GetChildren()) do
+        local highlight = container:FindFirstChildWhichIsA("Highlight")
+        if highlight then
+            highlight.OutlineColor = Color3.fromHSV(hue/360, 1, 1)
+        end
+    end
+end
+
+-- Hapus semua ESP
+local function ClearESP()
+    ESPFolder:ClearAllChildren()
+end
+
+-- Mulai ESP loop
+local connection
+local function StartESP()
+    if connection then return end
+    connection = RunService.Heartbeat:Connect(function()
+        if playerESPEnabled then
+            UpdateESPColors()
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character then
+                    if not ESPFolder:FindFirstChild(player.Name) then
+                        CreatePlayerESP(player)
+                    end
+                end
+            end
+        else
+            ClearESP()
+            if connection then
+                connection:Disconnect()
+                connection = nil
+            end
+        end
+    end)
+end
+
+-- Toggle GUI
+karakterTab:Toggle({
+    Title = "Player ESP",
+    Desc = "Show ESP for Other Players with Rainbow Outline and White NameTag",
+    Value = false,
+    Callback = function(state)
+        playerESPEnabled = state
+        if state then
+            StartESP()
+        else
+            ClearESP()
+            if connection then
+                connection:Disconnect()
+                connection = nil
+            end
+        end
+    end
+})
+
+-- Hapus ESP saat pemain keluar
+Players.PlayerRemoving:Connect(function(player)
+    local esp = ESPFolder:FindFirstChild(player.Name)
+    if esp then esp:Destroy() end
+end)
 
 -- Settings Tab
 local SettingsTab = Window:Tab({ Title = "Settings", Icon = "settings" })
