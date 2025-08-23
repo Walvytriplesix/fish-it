@@ -1588,6 +1588,119 @@ Players.PlayerRemoving:Connect(function(player)
     if esp then esp:Destroy() end
 end)
 
+karakterTab:Paragraph({
+    Title = "Trade",
+})
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- RemoteFunction langsung
+local RFInitiateTrade = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/InitiateTrade"]
+
+local selectedPlayer = nil
+local playerDropdown = nil
+
+-- Refresh dropdown player
+local function refreshPlayerDropdown()
+    if playerDropdown then
+        playerDropdown:Remove()
+    end
+
+    local playerNames = {}
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            table.insert(playerNames, plr.Name)
+        end
+    end
+
+    selectedPlayer = #playerNames > 0 and playerNames[1] or nil
+
+    playerDropdown = karakterTab:Dropdown({
+        Title = "Select Player",
+        Values = playerNames,
+        Value = selectedPlayer,
+        Callback = function(value)
+            selectedPlayer = value
+            WindUI:Notify({Title="Player Selected", Content=value, Duration=3})
+        end
+    })
+end
+
+refreshPlayerDropdown()
+
+-- Tombol trade langsung
+karakterTab:Button({
+    Title = "Give Item",
+    Callback = function()
+        if not selectedPlayer then
+            WindUI:Notify({Title="Error", Content="Tidak ada player yang dipilih!", Duration=3})
+            return
+        end
+
+        local targetPlayer = Players:FindFirstChild(selectedPlayer)
+        if not targetPlayer then
+            WindUI:Notify({Title="Error", Content="Player tidak ditemukan!", Duration=3})
+            return
+        end
+
+        -- Invoke remote langsung
+        local success, err = pcall(function()
+            -- Ganti UUID item sesuai kebutuhanmu
+            RFInitiateTrade:InvokeServer(targetPlayer.UserId, "36a63fb5-df50-4d51-9b05-9d226ccd3ce7")
+        end)
+
+        if success then
+            WindUI:Notify({Title="Success", Content="Trade request dikirim ke "..selectedPlayer, Duration=3})
+        else
+            WindUI:Notify({Title="Error", Content="Trade gagal: "..tostring(err), Duration=3})
+        end
+    end
+})
+
+-- Loop refresh dropdown tiap detik
+spawn(function()
+    while true do
+        wait(1)
+        refreshPlayerDropdown()
+    end
+end)
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- RemoteFunction
+local RFAwaitTradeResponse = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/AwaitTradeResponse"]
+
+-- Toggle state
+local autoAcceptEnabled = false
+
+-- Toggle di GUI
+karakterTab:Toggle({
+    Title = "Auto Accept Trade",
+    Callback = function(state)
+        autoAcceptEnabled = state
+        WindUI:Notify({Title="Auto Accept", Content=state and "ON" or "OFF", Duration=3})
+    end
+})
+
+-- Hook Auto Accept Trade
+RFAwaitTradeResponse.OnClientInvoke = newcclosure(function(itemData, fromPlayer, serverTime)
+    if autoAcceptEnabled then
+        -- Terima trade otomatis
+        return true
+    else
+        -- Normal behavior (tidak auto accept)
+        return false
+    end
+end)
+
+karakterTab:Paragraph({
+    Title = "Auto Sell Fish",
+    Desc = "Comming Soon",
+})
+
+
 -- Settings Tab
 local SettingsTab = Window:Tab({ Title = "Settings", Icon = "settings" })
 
