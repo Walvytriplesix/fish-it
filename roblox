@@ -459,6 +459,7 @@ local TpTab = Window:Tab({
 local teleportLocations = {
     {Title = "Kohana Lava", Position = Vector3.new(-593.32, 59.0, 130.82)},
     {Title = "Esotoric Island", Position = Vector3.new(2024.490, 27.397, 1391.620)},
+    {Title = "Ice Island", Position = Vector3.new(1766.46, 19.16, 3086.23)},
     {Title = "Kohana", Position = Vector3.new(-630.300, 16.035, 597.480)},
     {Title = "Lost Isle", Position = Vector3.new(-3660.070, 5.426, -1053.020)},
     {Title = "Stingray Shores", Position = Vector3.new(45.280, 28.000, 2987.110)},
