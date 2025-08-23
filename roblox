@@ -1,4 +1,3 @@
-
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
 -- Create GUI Window (mobile-friendly size, no tab dropdown, slightly transparent)
@@ -113,11 +112,14 @@ AutofarmTab:Paragraph({
     Title = "Auto Farm",
 })
 
+-- ===== Default delay variables =====
+local delayTime = 3 -- default delay
+local minSafeDelay = 1.5 -- minimum safe delay to prevent Auto Fish errors
+local delayInputValue = tostring(delayTime)
+
 -- ===== Auto Fish Toggle =====
 local autoFishEnabled = false
-local delayTime = 3 -- Delay between fishing attempts
-
-local autoFishToggle = AutofarmTab:Toggle({
+AutofarmTab:Toggle({
     Title = "Auto Fish",
     Desc = "Automatically fish and instant fishing",
     Value = false,
@@ -139,17 +141,17 @@ local autoFishToggle = AutofarmTab:Toggle({
                         local StartMinigame = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/RequestFishingMinigameStarted"]
                         local ChargeRod = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/ChargeFishingRod"]
 
-                        -- Auto equip rod (slot 1)
+                        -- Auto equip rod
                         EquipRod:FireServer(1)
-                        task.wait(0.1)
+                        task.wait(0.2)
 
                         -- Start mini game
                         StartMinigame:InvokeServer(-0.7499996423721313, 1)
-                        task.wait(0.1)
+                        task.wait(0.2)
 
                         -- Charge rod
                         ChargeRod:InvokeServer(workspace:GetServerTimeNow())
-                        task.wait(0.1)
+                        task.wait(0.2)
 
                         -- Request mini game again to ensure
                         StartMinigame:InvokeServer(-0.7499996423721313, 1)
@@ -159,7 +161,9 @@ local autoFishToggle = AutofarmTab:Toggle({
                         warn("Auto Fish error:", err)
                     end
 
-                    task.wait(delayTime)
+                    -- ensure minimal safe delay
+                    local appliedDelay = math.max(delayTime, minSafeDelay)
+                    task.wait(appliedDelay)
                 end
             end)
         else
@@ -174,8 +178,7 @@ local autoFishToggle = AutofarmTab:Toggle({
 
 -- ===== Auto Instant Fish Toggle =====
 local autoInstantFishEnabled = false
-
-local autoInstantFishToggle = AutofarmTab:Toggle({
+AutofarmTab:Toggle({
     Title = "Auto Instant Fish",
     Desc = "Automatically completes fishing instantly",
     Value = false,
@@ -207,6 +210,37 @@ local autoInstantFishToggle = AutofarmTab:Toggle({
                 Title = "Auto Instant Fish",
                 Content = "Disabled",
                 Duration = 3
+            })
+        end
+    end
+})
+
+-- ===== Delay TextBox + Button =====
+AutofarmTab:Input({
+    Title = "Auto Fish Delay",
+    Placeholder = "Enter delay (0.1–4 seconds)",
+    Callback = function(text)
+        delayInputValue = text
+    end
+})
+
+AutofarmTab:Button({
+    Title = "Apply Delay",
+    Desc = "Apply the entered delay value",
+    Callback = function()
+        local value = tonumber(delayInputValue)
+        if value and value >= 0.1 and value <= 4 then
+            delayTime = value
+            WindUI:Notify({
+                Title = "Auto Fish Delay",
+                Content = "Delay set to "..string.format("%.1f s", delayTime).." (min safe: "..minSafeDelay.." s)",
+                Duration = 2
+            })
+        else
+            WindUI:Notify({
+                Title = "Auto Fish Delay",
+                Content = "Invalid input! Must be between 0.1–4 seconds",
+                Duration = 2
             })
         end
     end
@@ -1031,12 +1065,6 @@ BuyRodTab:Button({
             end
         end
     end
-})
-
--- ===== Paragraph =====
-BuyRodTab:Paragraph({
-    Title="Buy Boat",
-    Desc="Select a Boat to purchase."
 })
 
 -- Urutan boat
