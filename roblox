@@ -414,17 +414,17 @@ changestatsTab:Button({
                 if rodModule and rodModule:IsA("ModuleScript") then
                     local rodData = require(rodModule)
                     
-                    rodData.VisualClickPowerPercent = 999999
-                    rodData.ClickPower = 999999
-                    rodData.Resilience = 999999
-                    rodData.Windup = NumberRange.new(0.01,0.01)
-                    rodData.MaxWeight = 999999
+                    rodData.VisualClickPowerPercent = 0.99999999999999
+                    rodData.ClickPower = 99999999999999
+                    rodData.Resilience = 99999999999999
+                    rodData.Windup = NumberRange.new(1,10.99999999999999)
+                    rodData.MaxWeight = 99999999999999
 
                     if rodData.RollData then
-                        rodData.RollData.BaseLuck = 999999
+                        rodData.RollData.BaseLuck = 99999999999999
                         if rodData.RollData.Frequency then
-                            rodData.RollData.Frequency.Golden = 999999
-                            rodData.RollData.Frequency.Rainbow = 999999
+                            rodData.RollData.Frequency.Golden = 1
+                            rodData.RollData.Frequency.Rainbow = 2
                         end
                     end
                 else
@@ -1218,44 +1218,46 @@ karakterTab:Button({
     end
 })
 
--- ===== Infinity Jump Toggle (Android-friendly) =====
--- ===== Infinity Jump Toggle (Android Friendly) =====
 local infinityJumpToggle = karakterTab:Toggle({
     Title = "Infinity Jump",
-    Desc = "Allows you to jump infinitely on Android while tapping screen.",
     Value = false,
     Callback = function(state)
         _G.InfinityJumpEnabled = state
-
         local UserInputService = game:GetService("UserInputService")
+        local Players = game:GetService("Players")
+        local player = Players.LocalPlayer
+
+        -- Disconnect existing connections
+        if _G.InfinityJumpConnection then
+            _G.InfinityJumpConnection:Disconnect()
+            _G.InfinityJumpConnection = nil
+        end
 
         if state then
-            -- Connect touch input for Android
-            _G.InfinityJumpConnection = UserInputService.TouchStarted:Connect(function(touch, gameProcessed)
-                if gameProcessed then return end
-                local player = game.Players.LocalPlayer
+            local function tryJump()
                 local char = player.Character or player.CharacterAdded:Wait()
                 local humanoid = char:FindFirstChild("Humanoid")
                 if humanoid and humanoid.Health > 0 then
                     humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
                 end
+            end
+
+            -- PC keyboard (Space)
+            _G.InfinityJumpConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                if gameProcessed then return end
+                if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Space then
+                    tryJump()
+                elseif input.UserInputType == Enum.UserInputType.Touch then
+                    tryJump()
+                end
             end)
 
-            WindUI:Notify({
-                Title = "Infinity Jump",
-                Content = "Enabled",
-                Duration = 3
-            })
-        else
-            if _G.InfinityJumpConnection then
-                _G.InfinityJumpConnection:Disconnect()
-                _G.InfinityJumpConnection = nil
-            end
-            WindUI:Notify({
-                Title = "Infinity Jump",
-                Content = "Disabled",
-                Duration = 3
-            })
+            -- Android / Touch hold
+            UserInputService.TouchMoved:Connect(function(touch, gameProcessed)
+                if _G.InfinityJumpEnabled then
+                    tryJump()
+                end
+            end)
         end
     end
 })
@@ -1701,6 +1703,34 @@ karakterTab:Paragraph({
     Desc = "Comming Soon",
 })
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RFSellItem = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/SellItem"]
+
+-- UUID item
+local itemUUID = "aad4dfaf-3144-4202-8dea-d7f7c7a9f33a"
+
+-- Toggle
+local autoSell = false
+karakterTab:Toggle({
+    Title = "Auto Sell Toggle",
+    Value = false,
+    Callback = function(val)
+        autoSell = val
+        WindUI:Notify({Title="Auto Sell", Content="Status: "..tostring(val), Duration=3})
+    end
+})
+
+-- Loop auto sell
+spawn(function()
+    while true do
+        wait(1)
+        if autoSell then
+            pcall(function()
+                RFSellItem:InvokeServer(itemUUID)
+            end)
+        end
+    end
+end)
 
 -- Settings Tab
 local SettingsTab = Window:Tab({ Title = "Settings", Icon = "settings" })
