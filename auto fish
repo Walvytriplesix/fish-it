@@ -1,0 +1,98 @@
+-- FINAL AUTO FISHING PERFECT (FASTER CHARGE)
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local FishingController = require(ReplicatedStorage.Controllers.FishingController)
+
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+-- Config lempar “perfect”
+local distance = 100
+local side = -0.7499996423721313
+local up = 1
+local chargeTime = 0.6 -- lebih cepat supaya lemparan pas
+
+-- Toggle
+local autoFishing = false
+
+-- Fungsi pilih spot mancing terdekat
+local function getFishingSpot()
+    local spots = {}
+    for _, v in ipairs(workspace:GetChildren()) do
+        if v:IsA("BasePart") and (v.Name == "FishingSpot" or v.Name == "Water") then
+            table.insert(spots, v)
+        end
+    end
+    if #spots == 0 then return nil end
+    table.sort(spots, function(a,b)
+        return (a.Position - hrp.Position).Magnitude < (b.Position - hrp.Position).Magnitude
+    end)
+    return spots[1]
+end
+
+-- Fungsi lempar jauh perfect
+local function goToSpotPerfect(spot)
+    if not spot then return end
+
+    -- Camera & HRP menghadap spot
+    hrp.CFrame = CFrame.new(hrp.Position, spot.Position)
+
+    -- Hitung offset perfect
+    local direction = (spot.Position - hrp.Position).Unit
+    local targetCFrame = CFrame.new(hrp.Position + direction * distance + Vector3.new(side, up, 0))
+    
+    local tween = TweenService:Create(hrp, TweenInfo.new(1.5), {CFrame = targetCFrame})
+    tween:Play()
+    tween.Completed:Wait()
+end
+
+-- Fungsi lempar kail dengan auto charge
+local function castRodAutoCharge()
+    local camera = workspace.CurrentCamera
+    local centerX, centerY = camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2
+
+    VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 0)
+    task.wait(chargeTime)
+    VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 0)
+end
+
+-- Fungsi mini-game stabil
+local function stableAutoMinigame()
+    if FishingController:GetCurrentGUID() then
+        local camera = workspace.CurrentCamera
+        local centerX, centerY = camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2
+        for i = 1, 8 do
+            VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 0)
+            task.wait(0.1)
+            VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 0)
+            task.wait(0.15)
+        end
+    end
+end
+
+-- Loop auto fishing
+task.spawn(function()
+    while task.wait(2) do
+        if autoFishing then
+            local spot = getFishingSpot()
+            goToSpotPerfect(spot)
+            castRodAutoCharge()
+            task.wait(0.1)
+            stableAutoMinigame()
+            print("[AutoFishing] Lempar kail PERFECT sejauh", distance, "stud!")
+        end
+    end
+end)
+
+-- Toggle ON/OFF tombol E
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.E then
+        autoFishing = not autoFishing
+        print("[AutoFishing] Status:", autoFishing and "ON" or "OFF")
+    end
+end)
