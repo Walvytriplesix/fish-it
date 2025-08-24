@@ -64,7 +64,7 @@ end
 
 -- Lewati GUI kalau key sudah valid
 if isKeySaved() then
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/Walvy666/Fish-It/main/Walvy-Community", true))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Walvytriplesix/fish-it/refs/heads/main/roblox", true))()
     return
 end
 
