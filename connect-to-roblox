@@ -1,7 +1,7 @@
 --// Variables
 local scriptUrls = {
-    [6701277882] = "/Getkey,
-    [121864768012064] = "/Getkey"
+    [6701277882] = "Getkey,
+    [121864768012064] = "Getkey"
 }
 
 local scriptUrl = scriptUrls[game.PlaceId]
