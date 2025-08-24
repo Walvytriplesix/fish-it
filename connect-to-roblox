@@ -1,13 +1,13 @@
 --// Variables
 local scriptUrls = {
-    [6701277882] = "/roblox",
-    [121864768012064] = "/roblox"
+    [6701277882] = "/Getkey,
+    [121864768012064] = "/Getkey"
 }
 
 local scriptUrl = scriptUrls[game.PlaceId]
 if scriptUrl then
     local success, errorMsg = pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/Walvytriplesix/fish-it/refs/heads/main/" .. scriptUrl))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Walvytriplesix/fish-it/main/" .. scriptUrl))()
     end)
     if not success then
         warn("[Walvy Community] Failed to load script:", errorMsg)
