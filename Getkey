@@ -2,9 +2,9 @@ local HttpService = game:GetService("HttpService")
 local UserInputService = game:GetService("UserInputService")
 
 -- Config
-local pastebinRaw = "https://link-hub.net/1373842/64saSOFLl3K7"
-local getKeyLink = "https://link-hub.net/1373842/64saSOFLl3K7"
-local backupKey = "WALVY-918760"
+local pastebinRaw = "https://link-hub.net/1373842/CuhxyDj1x0uR"
+local getKeyLink = "https://link-hub.net/1373842/CuhxyDj1x0uR"
+local backupKey = "WALVY-KEY404"
 local keyFileName = "WalvyKeyData.json"
 local expireTimeInSeconds = 60 * 60 * 12 -- 12 jam
 
