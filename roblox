@@ -215,6 +215,37 @@ AutofarmTab:Toggle({
     end
 })
 
+-- ===== Delay TextBox + Button =====
+AutofarmTab:Input({
+    Title = "Auto Fish Delay",
+    Placeholder = "Enter delay (0.1–4 seconds)",
+    Callback = function(text)
+        delayInputValue = text
+    end
+})
+
+AutofarmTab:Button({
+    Title = "Apply Delay",
+    Desc = "Apply the entered delay value",
+    Callback = function()
+        local value = tonumber(delayInputValue)
+        if value and value >= 0.1 and value <= 4 then
+            delayTime = value
+            WindUI:Notify({
+                Title = "Auto Fish Delay",
+                Content = "Delay set to "..string.format("%.1f s", delayTime).." (min safe: "..minSafeDelay.." s)",
+                Duration = 2
+            })
+        else
+            WindUI:Notify({
+                Title = "Auto Fish Delay",
+                Content = "Invalid input! Must be between 0.1–4 seconds",
+                Duration = 2
+            })
+        end
+    end
+})
+
 -- ===== Auto Sell Button =====
 local sellAllButton = AutofarmTab:Button({
     Title = "Sell All Fish",
