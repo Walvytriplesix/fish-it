@@ -176,7 +176,7 @@ AutofarmTab:Toggle({
     end
 })
 
--- ===== Auto Hold Screen Toggle =====
+-- ===== Auto Fishing v2 (Hold Screen) =====
 local autoHoldEnabled = false
 AutofarmTab:Toggle({
     Title = "Auto Fishing v2",
@@ -192,28 +192,22 @@ AutofarmTab:Toggle({
             })
 
             task.spawn(function()
-                local RunService = game:GetService("RunService")
-                local Workspace = game:GetService("Workspace")
-                local VirtualInputManager = game:GetService("VirtualInputManager")
-                local ReplicatedStorage = game:GetService("ReplicatedStorage")
-                local camera = Workspace.CurrentCamera
-                local holdDuration = 0.4 -- detik
-                local loopDelay = 0.2    -- delay sebelum ulangi
-
-                local REEquipToolFromHotbar = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/EquipToolFromHotbar"]
+                local holdDuration = 0.4
+                local loopDelay = 0.2
 
                 while autoHoldEnabled do
-                    -- Auto equip rod di slot 1
                     pcall(function()
+                        -- Equip rod slot 1
                         REEquipToolFromHotbar:FireServer(1)
+
+                        -- Klik pojok kiri bawah
+                        local clickX = 5
+                        local clickY = camera.ViewportSize.Y - 5
+                        VirtualInputManager:SendMouseButtonEvent(clickX, clickY, 0, true, game, 0)
+                        task.wait(holdDuration)
+                        VirtualInputManager:SendMouseButtonEvent(clickX, clickY, 0, false, game, 0)
                     end)
 
-                    local centerX, centerY = camera.ViewportSize.X/2, camera.ViewportSize.Y/2
-                    -- Tekan layar
-                    VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 0)
-                    task.wait(holdDuration)
-                    -- Lepas layar
-                    VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 0)
                     task.wait(loopDelay)
                     RunService.Heartbeat:Wait()
                 end
@@ -228,7 +222,7 @@ AutofarmTab:Toggle({
     end
 })
 
--- ===== Auto Instant Fish Toggle =====
+-- ===== Auto Instant Fish =====
 local autoInstantFishEnabled = false
 AutofarmTab:Toggle({
     Title = "Auto Instant Fish",
@@ -246,14 +240,9 @@ AutofarmTab:Toggle({
 
             task.spawn(function()
                 while autoInstantFishEnabled do
-                    local success, err = pcall(function()
-                        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-                        local REFishingCompleted = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/FishingCompleted"]
+                    pcall(function()
                         REFishingCompleted:FireServer()
                     end)
-                    if not success then
-                        warn("Auto Instant Fish error:", err)
-                    end
                     task.wait(0.1)
                 end
             end)
