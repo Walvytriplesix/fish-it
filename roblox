@@ -112,12 +112,45 @@ AutofarmTab:Paragraph({
     Title = "Auto Farm",
 })
 
--- ===== Default delay variables =====
+-- ===== Animasi Setup =====
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- Buat animator (kalau belum ada)
+local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+
+-- List animasi
+local animations = {
+    idle = "rbxassetid://96586569072385", -- idle pegang pancing
+    cast = "rbxassetid://180435571",      -- lempar kail
+    wait = "rbxassetid://92624107165273", -- nunggu tarik ikan
+    reel = "rbxassetid://134965425664034" -- narik kail/ikan
+}
+
+-- Fungsi untuk load animasi
+local function loadAnim(id)
+    local anim = Instance.new("Animation")
+    anim.AnimationId = id
+    return animator:LoadAnimation(anim)
+end
+
+-- Load semua animasi
+local animTracks = {
+    idle = loadAnim(animations.idle),
+    cast = loadAnim(animations.cast),
+    wait = loadAnim(animations.wait),
+    reel = loadAnim(animations.reel)
+}
+
+-- ===== Auto Fish Setup =====
+-- Default delay variables
 local delayTime = 1.6 -- default delay
 local minSafeDelay = 1.5 -- minimum safe delay to prevent Auto Fish errors
 local delayInputValue = tostring(delayTime)
 
--- ===== Auto Fish Toggle =====
+-- Auto Fish Toggle
 local autoFishEnabled = false
 AutofarmTab:Toggle({
     Title = "Auto Fish",
@@ -125,14 +158,13 @@ AutofarmTab:Toggle({
     Value = false,
     Callback = function(state)
         autoFishEnabled = state
-
         if state then
             WindUI:Notify({
                 Title = "Auto Fish",
                 Content = "Enabled",
                 Duration = 3
             })
-
+            
             task.spawn(function()
                 while autoFishEnabled do
                     local success, err = pcall(function()
@@ -140,33 +172,57 @@ AutofarmTab:Toggle({
                         local EquipRod = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/EquipToolFromHotbar"]
                         local StartMinigame = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/RequestFishingMinigameStarted"]
                         local ChargeRod = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/ChargeFishingRod"]
-
-                        -- Auto equip rod
+                        
+                        -- Hentikan semua animasi sebelum memulai siklus baru
+                        for _, track in pairs(animTracks) do
+                            track:Stop()
+                        end
+                        
+                        -- Tahap 1: Animasi idle + Equip rod
+                        animTracks.idle:Play()
                         EquipRod:FireServer(1)
                         task.wait(0.2)
-
-                        -- Start mini game
+                        
+                        -- Tahap 2: Animasi cast + Start minigame
+                        animTracks.idle:Stop()
+                        animTracks.cast:Play()
                         StartMinigame:InvokeServer(-0.7499996423721313, 1)
                         task.wait(0.2)
-
-                        -- Charge rod
+                        
+                        -- Tahap 3: Animasi wait (sesuaikan durasi jika perlu)
+                        animTracks.cast:Stop()
+                        animTracks.wait:Play()
+                        task.wait(0.5) -- Durasi singkat untuk animasi wait
+                        
+                        -- Tahap 4: Animasi reel + Charge rod
+                        animTracks.wait:Stop()
+                        animTracks.reel:Play()
                         ChargeRod:InvokeServer(workspace:GetServerTimeNow())
                         task.wait(0.2)
-
-                        -- Request mini game again to ensure
+                        
+                        -- Pastikan minigame selesai
                         StartMinigame:InvokeServer(-0.7499996423721313, 1)
+                        task.wait(0.2)
+                        
+                        -- Biarkan animasi reel selesai sebelum siklus berikutnya
+                        task.wait(1.5) -- Waktu tambahan untuk menyelesaikan animasi reel
                     end)
-
+                    
                     if not success then
                         warn("Auto Fish error:", err)
                     end
-
-                    -- ensure minimal safe delay
+                    
+                    -- Gunakan delay aman
                     local appliedDelay = math.max(delayTime, minSafeDelay)
                     task.wait(appliedDelay)
                 end
             end)
         else
+            -- Hentikan semua animasi saat Auto Fish dimatikan
+            for _, track in pairs(animTracks) do
+                track:Stop()
+            end
+            
             WindUI:Notify({
                 Title = "Auto Fish",
                 Content = "Disabled",
